@@ -7,6 +7,7 @@ import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.tgi.util.HmrcUtil;
 
 import uk.gov.hmrc.model.Token;
 
@@ -44,8 +45,6 @@ public class OauthService extends HmrcService {
                     .setCode(code)
                     .buildBodyMessage();
             
-            //request.addHeader("Accept", "application/vnd.hmrc.1.0+json");
-            //request.addHeader("Content-Type", "application/json");
             request.addHeader("Accept", "application/json");
             request.addHeader("Content-Type", "application/json");
 
