@@ -28,6 +28,23 @@ public class VATService extends HmrcService{
 				Optional.of(json));
 	}
 	
+	public String vatObligations(String accessToken, String vrn, String from, String to, String status) throws UnauthorizedException {
+		String url = urlHmrc+"/organisations/vat/"+vrn+"/obligations";
+		if ((status != null) | (from != null) | (to != null)) {
+			url = url + "?";
+			if (status != null)
+				url = url + "status=" + status + ";";
+			if (from != null)
+				url = url + "from=" + from + ";";
+			if (to != null)
+				url = url + "to=" + to + ";";
+		}
+		return serviceConnector.get(
+				url,
+				"application/vnd.hmrc.1.0+json",
+				Optional.of(accessToken));
+	}
+	
 	@Override
 	public String toString() {
 		return "VATService {" + "urlHmrc = " + urlHmrc +

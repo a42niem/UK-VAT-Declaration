@@ -32,6 +32,7 @@ public class HmrcUtil {
 	private final static String vrn = "736547705";
 	private final static String callbackUrl = "https://nostromo:8443"; // must be set in Application > Manage redirect URIs
 	//private final static String callbackUrl = "https://devuan.alfredkochen.de:8443"; // must be set in Application > Manage redirect URIs
+	public final static String publicIP = "87.139,125.175"; // 
 	private final static String clientId = "L_fjrRZZMhWMS1miZv4AarJXHxMa";
 	private final static String scope="write:vat";
 	private final static String urlHmrc="https://test-api.service.hmrc.gov.uk";
@@ -50,6 +51,11 @@ public class HmrcUtil {
 	}
 
 	public static String getAuthorizationRequestUrl() {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		return oauthservice.getAuthorizationRequestUrl(scope);
+	}
+
+	public static String getAuthorizationRequestUrl(String scope) {
 		OauthService oauthservice = HmrcUtil.getOauthService();
 		return oauthservice.getAuthorizationRequestUrl(scope);
 	}
@@ -476,7 +482,7 @@ public class HmrcUtil {
 			iProcessUI.statusUpdate(text);
 	}
 
-	public static String sendData(String code, String periodKey, double vatDueSales, double vatDueAcquisitions,
+	public static String sendReturnData(String code, String periodKey, double vatDueSales, double vatDueAcquisitions,
 								  double totalVatDue, double vatReclaimedCurrPeriod, double netVatDue, 
 			                      double totalValueSalesExVAT, double totalValuePurchasesExVAT, 
 			                      double totalValueGoodsSuppliedExVAT, double totalAcquisitionsExVAT,
@@ -503,5 +509,66 @@ public class HmrcUtil {
 		return retValue;
 	}
 
+	public static String getObligations(String code, String dateFrom, String dateTo, String status) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				new  ServiceConnector());
+
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = getVATObligations(oauthservice, vatservice, code, vrn, dateFrom, dateTo, status);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return retValue;
+	}
+	public static String getVATObligations(OauthService oauthservice, VATService vatservice, String code, 
+			                               String vrn, String dateFrom, String dateTo, String status) throws IOException, UnauthorizedException {		
+
+//		String json = VATParser.toJson(vatObligation);
+//		System.out.println(json);
+
+		String jsonResponse;
+		Token token = oauthservice.getToken(code);
+		try {
+			
+			jsonResponse = vatservice.vatObligations(token.getAccessToken(), vrn, dateFrom, dateTo, status );
+		} catch (UnauthorizedException ue) {
+			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
+			jsonResponse = vatservice.vatObligations(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo, status);
+		}
+
+//		VATReturnResponse vatReturnResponse=VATParser.fromJsonResponse(jsonResponse);		
+//
+//		System.out.println("PaymentIndicator - "+vatReturnResponse.getPaymentIndicator());
+//		System.out.println("ProcessingDate - "+vatReturnResponse.getProcessingDate());
+//		System.out.println("ChargeRefNumber - "+vatReturnResponse.getChargeRefNumber());
+//		System.out.println("FormBundleNumber - "+vatReturnResponse.getFormBundleNumber());
+		
+		if (jsonResponse.startsWith("Error")) {
+			return jsonResponse;
+		}
+		else { // 200
+			System.out.println(jsonResponse.toString());
+
+			VATReturnResponse vatReturnResponse=VATParser.fromJsonResponse(jsonResponse);
+
+			System.out.println(vatReturnResponse.getPaymentIndicator());
+			System.out.println(vatReturnResponse.getProcessingDate());
+			System.out.println(vatReturnResponse.getChargeRefNumber());
+			System.out.println(vatReturnResponse.getFormBundleNumber());
+
+			StringBuilder msg = new StringBuilder("PaymentIndicator=").append(vatReturnResponse.getPaymentIndicator()).append(" - ")
+					.append("ProcessingDate=").append(vatReturnResponse.getProcessingDate()).append(" - ")
+					.append("ChargeRefNumber=").append(vatReturnResponse.getChargeRefNumber()).append(" - ")
+					.append("FormBundleNumber=").append(vatReturnResponse.getFormBundleNumber());
+
+			return msg.toString();//tbResult.setValue(msg.toString());
+		}
+
+	}
 
 }

@@ -52,14 +52,16 @@ import org.zkoss.zul.Vlayout;
  * @author nmicoud, TGI
  */
 
-public class WTestHMRC extends ADForm implements EventListener<Event> {
+public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 
 	private static final long serialVersionUID = -8528918348159236707L;
 
+	private final static String scope="write:vat";
+	
 	// FIXME: change before next testing of same period, set back to "A" for production! 
 	private static final String periodDelimiter = "D";
 	
-	private Button btn1, btn2, btn0, btn3;
+	private Button btnAuthorize, btnSend, btnSelect, btnLegal;
 	private Label labelLegal = new Label();
 	private Label labelDateAcct = new Label();
 	private Label labelDateAcct2 = new Label();
@@ -122,8 +124,8 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 		labelDateAcct.setText(Msg.translate(Env.getCtx(), "DateAcct"));
 		labelDateAcct2.setText("-");
 		labelRate.setText(Msg.translate(Env.getCtx(), "Rate"));
-		btn0 = new Button("1. Select data ");
-		btn0.addEventListener(Events.ON_CLICK, this);
+		btnSelect = new Button("1. Select data ");
+		btnSelect.addEventListener(Events.ON_CLICK, this);
 
 		Hlayout hl0 = new Hlayout();
 		hl0.setValign("middle");
@@ -131,7 +133,7 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 		hl0.appendChild(fieldDateAcct.getComponent());
 		hl0.appendChild(labelDateAcct2);
 		hl0.appendChild(fieldDateAcct2.getComponent());
-		hl0.appendChild(btn0);
+		hl0.appendChild(btnSelect);
 
 		Vlayout vl = new Vlayout();
 		vl.appendChild(hl0);
@@ -230,30 +232,30 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 		hltaev.appendChild(tbtotalAcquisitionsExVAT);
 		vl.appendChild(hltaev);
 		
-		btn1 = new Button("2. Request an OAuth 2.0 authorisation code with the required scope");
-		btn1.addEventListener(Events.ON_CLICK, this);
+		btnAuthorize = new Button("2. Request an OAuth 2.0 authorisation code with the required scope");
+		btnAuthorize.addEventListener(Events.ON_CLICK, this);
 		tbCredentials.setValue(username + " / " + userpwd);
 		tbCredentials.setReadonly(true);
 
 		Hlayout hl = new Hlayout();
 		hl.setValign("middle");
-		hl.appendChild(btn1);
+		hl.appendChild(btnAuthorize);
 		hl.appendChild(tbCredentials);
 		vl.appendChild(hl);
 
 		labelLegal.setText(Msg.translate(Env.getCtx(), "When you submit this VAT information you are making a legal\r\n" + 
 				"declaration that the information is true and complete. A false declaration\r\n" + 
 				"can result in prosecution."));
-		btn3 = new Button("3. Accept legal ");
-		btn3.addEventListener(Events.ON_CLICK, this);
+		btnLegal = new Button("3. Accept legal ");
+		btnLegal.addEventListener(Events.ON_CLICK, this);
 
-		btn2 = new Button("4. Exchange the OAuth 2.0 authorisation code for an access token and send data");
-		btn2.addEventListener(Events.ON_CLICK, this);
+		btnSend = new Button("4. Exchange the OAuth 2.0 authorisation code for an access token and send data");
+		btnSend.addEventListener(Events.ON_CLICK, this);
 
 		vl.appendChild(tbUrlWithCode);
 		vl.appendChild(labelLegal);
-		vl.appendChild(btn3);
-		vl.appendChild(btn2);
+		vl.appendChild(btnLegal);
+		vl.appendChild(btnSend);
 		vl.appendChild(tbResult);
 
 		center.appendChild(vl);
@@ -276,17 +278,17 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 		tbtotalValuePurchasesExVAT.setEnabled(false);
 		tbtotalValueGoodsSuppliedExVAT.setEnabled(false);
 		tbtotalAcquisitionsExVAT.setEnabled(false);
-		btn1.setEnabled(false);
-		btn2.setEnabled(false);
-		btn3.setEnabled(false);
+		btnAuthorize.setEnabled(false);
+		btnSend.setEnabled(false);
+		btnLegal.setEnabled(false);
 	}
 
 	public void onEvent(Event event) throws Exception {
 
 		Properties ctx = Env.getCtx();		
 		
-		if (event.getTarget() == btn1) {
-			String url = HmrcUtil.getAuthorizationRequestUrl();
+		if (event.getTarget() == btnAuthorize) {
+			String url = HmrcUtil.getAuthorizationRequestUrl(scope);
 
 			Desktop desktop = AEnv.getDesktop();
 			ServerPushTemplate pushUpdateUi = new ServerPushTemplate (desktop);
@@ -297,11 +299,11 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 
 			tbUrlWithCode.setEnabled(true);
 			//tbPeriodKey.setEnabled(true);
-			btn3.setEnabled(true);
-			btn2.setEnabled(false);
+			btnLegal.setEnabled(true);
+			btnSend.setEnabled(false);
 
 		}
-		else if (event.getTarget() == btn2) {
+		else if (event.getTarget() == btnSend) {
 
 			//String periodKey = tbPeriodKey.getValue();
 			Calendar periodCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct.getValue());
@@ -341,13 +343,13 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 
 			if (msg.startsWith("Error")) {
 				FDialog.error(getWindowNo(), "Error", msg);
-				btn1.setEnabled(true);
+				btnAuthorize.setEnabled(true);
 			}
 			else
 				FDialog.info(getWindowNo(), this, "", msg);
 
 		}
-		else if (event.getTarget() == btn0) {
+		else if (event.getTarget() == btnSelect) {
 
 			if(fieldDateAcct.getValue()==null)
 				throw new WrongValueException(fieldDateAcct.getComponent(), "StartDate must be set !");
@@ -383,9 +385,9 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 			tbtotalValuePurchasesExVAT.setValue(ukbasegbp.setScale(0, RoundingMode.DOWN).toString()); // 7
 			tbtotalValueGoodsSuppliedExVAT.setValue("0"); // 8
 			tbtotalAcquisitionsExVAT.setValue("0"); // 9
-			btn1.setEnabled(true);
-			btn2.setEnabled(false);
-			btn3.setEnabled(false);
+			btnAuthorize.setEnabled(true);
+			btnSend.setEnabled(false);
+			btnLegal.setEnabled(false);
 						
 
 //			StringBuilder sql = new StringBuilder("SELECT abs(fa.amtacctdr-fa.amtacctcr), (fa.amtacctdr-fa.amtacctcr),") // 1-2
@@ -399,13 +401,13 @@ public class WTestHMRC extends ADForm implements EventListener<Event> {
 //				
 
 		}		
-		else if (event.getTarget() == btn3) {
+		else if (event.getTarget() == btnLegal) {
 			String msg = "Thank you for accepting the legal declaration";
 			FDialog.info(getWindowNo(), this, "", msg);
-			btn3.setEnabled(false);
-			btn0.setEnabled(false);
-			btn1.setEnabled(false);
-			btn2.setEnabled(true);
+			btnLegal.setEnabled(false);
+			btnSelect.setEnabled(false);
+			btnAuthorize.setEnabled(false);
+			btnSend.setEnabled(true);
 			finalised = true;
 
 		}
