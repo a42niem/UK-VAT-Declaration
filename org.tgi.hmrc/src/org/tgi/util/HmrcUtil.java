@@ -18,6 +18,8 @@ import org.tgi.model.MTXXRReport;
 
 import uk.gov.hmrc.model.Token;
 import uk.gov.hmrc.model.UnauthorizedException;
+import uk.gov.hmrc.model.VATObligation;
+import uk.gov.hmrc.model.VATObligationResponse;
 import uk.gov.hmrc.model.VATReturn;
 import uk.gov.hmrc.model.VATReturnResponse;
 import uk.gov.hmrc.parser.VATParser;
@@ -495,8 +497,6 @@ public class HmrcUtil {
 				                            totalValuePurchasesExVAT, totalValueGoodsSuppliedExVAT,
 				                            totalAcquisitionsExVAT, finalised);
 		
-//		Token token = oauthservice.getToken(code);
-//		System.out.println("token=" + token);
 		String retValue = "";
 		try {
 			System.out.println(oauthservice.toString());
@@ -528,9 +528,6 @@ public class HmrcUtil {
 	public static String getVATObligations(OauthService oauthservice, VATService vatservice, String code, 
 			                               String vrn, String dateFrom, String dateTo, String status) throws IOException, UnauthorizedException {		
 
-//		String json = VATParser.toJson(vatObligation);
-//		System.out.println(json);
-
 		String jsonResponse;
 		Token token = oauthservice.getToken(code);
 		try {
@@ -540,33 +537,37 @@ public class HmrcUtil {
 			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
 			jsonResponse = vatservice.vatObligations(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo, status);
 		}
-
-//		VATReturnResponse vatReturnResponse=VATParser.fromJsonResponse(jsonResponse);		
-//
-//		System.out.println("PaymentIndicator - "+vatReturnResponse.getPaymentIndicator());
-//		System.out.println("ProcessingDate - "+vatReturnResponse.getProcessingDate());
-//		System.out.println("ChargeRefNumber - "+vatReturnResponse.getChargeRefNumber());
-//		System.out.println("FormBundleNumber - "+vatReturnResponse.getFormBundleNumber());
 		
-		if (jsonResponse.startsWith("Error")) {
+		if (jsonResponse.contains("statusCode")) {
 			return jsonResponse;
 		}
 		else { // 200
 			System.out.println(jsonResponse.toString());
 
-			VATReturnResponse vatReturnResponse=VATParser.fromJsonResponse(jsonResponse);
+			VATObligationResponse vatObligationResponse=VATParser.fromJsonObligations(jsonResponse);
 
-			System.out.println(vatReturnResponse.getPaymentIndicator());
-			System.out.println(vatReturnResponse.getProcessingDate());
-			System.out.println(vatReturnResponse.getChargeRefNumber());
-			System.out.println(vatReturnResponse.getFormBundleNumber());
+			VATObligation[] obligations = vatObligationResponse.getObligations();
+			StringBuilder msg = new StringBuilder("Obligations: \n");
+			for (VATObligation obligation : obligations) {
+				System.out.println(obligation.getStart());
+				System.out.println(obligation.getEnd());
+				System.out.println(obligation.getStatus());
+				msg.append("StartDate=").append(obligation.getStart()).append(" - ")
+				.append("EndDate=").append(obligation.getEnd()).append(" - ")
+				.append("Status=").append(obligation.getStatus()).append(" - ");
+				if (obligation.getStatus().compareTo("F") == 0) {
+					System.out.println(obligation.getReceived());
+					msg.append("Received=").append(obligation.getReceived()).append("\n");
+				}
+				if (obligation.getStatus().compareTo("O") == 0) {
+					System.out.println(obligation.getDue());
+					msg.append("Due=").append(obligation.getDue()).append("\n");
+				}
+				System.out.println(obligation.getPeriodKey());
+			}
+			
 
-			StringBuilder msg = new StringBuilder("PaymentIndicator=").append(vatReturnResponse.getPaymentIndicator()).append(" - ")
-					.append("ProcessingDate=").append(vatReturnResponse.getProcessingDate()).append(" - ")
-					.append("ChargeRefNumber=").append(vatReturnResponse.getChargeRefNumber()).append(" - ")
-					.append("FormBundleNumber=").append(vatReturnResponse.getFormBundleNumber());
-
-			return msg.toString();//tbResult.setValue(msg.toString());
+			return msg.toString();
 		}
 
 	}

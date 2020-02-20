@@ -7,6 +7,7 @@ import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.apache.oltu.oauth2.common.message.types.ResponseType;
 import org.tgi.util.HmrcUtil;
 
 import uk.gov.hmrc.model.Token;
@@ -77,11 +78,12 @@ public class OauthService extends HmrcService {
 		try {
 			OAuthClientRequest request = OAuthClientRequest
 					.authorizationLocation(authorizeUrl)
-					.setResponseType("code")
 					.setClientId(clientId)
+					.setResponseType(ResponseType.CODE.toString())
 					.setScope(scope)
 					.setRedirectURI(callbackUrl)
 					.buildQueryMessage();
+
 			return request.getLocationUri();
 
 		} catch (OAuthSystemException e) {

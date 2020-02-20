@@ -32,12 +32,12 @@ public class VATService extends HmrcService{
 		String url = urlHmrc+"/organisations/vat/"+vrn+"/obligations";
 		if ((status != null) | (from != null) | (to != null)) {
 			url = url + "?";
-			if (status != null)
-				url = url + "status=" + status + ";";
+			if (status != null && status.compareTo("") != 0)
+				url = url + "status=" + status + "&";
 			if (from != null)
-				url = url + "from=" + from + ";";
+				url = url + "from=" + from + "&";
 			if (to != null)
-				url = url + "to=" + to + ";";
+				url = url + "to=" + to ;
 		}
 		return serviceConnector.get(
 				url,
