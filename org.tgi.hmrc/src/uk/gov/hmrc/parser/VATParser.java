@@ -3,6 +3,7 @@ package uk.gov.hmrc.parser;
 import java.io.IOException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import uk.gov.hmrc.model.VATLiabilitiesResponse;
 import uk.gov.hmrc.model.VATObligation;
 import uk.gov.hmrc.model.VATObligationResponse;
 import uk.gov.hmrc.model.VATReturn;
@@ -26,6 +27,10 @@ public class VATParser {
 
     public static VATObligationResponse fromJsonObligations(String json) throws IOException {
         return prettyMapper.readValue(json,  VATObligationResponse.class);
+    }
+
+    public static VATLiabilitiesResponse fromJsonLiabilities(String json) throws IOException {
+        return prettyMapper.readValue(json,  VATLiabilitiesResponse.class);
     }
 
 }

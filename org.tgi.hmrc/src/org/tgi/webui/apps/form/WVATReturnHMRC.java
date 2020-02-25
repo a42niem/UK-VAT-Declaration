@@ -287,69 +287,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 
 		Properties ctx = Env.getCtx();		
 		
-		if (event.getTarget() == btnAuthorize) {
-			String url = HmrcUtil.getAuthorizationRequestUrl(scope);
-
-			Desktop desktop = AEnv.getDesktop();
-			ServerPushTemplate pushUpdateUi = new ServerPushTemplate (desktop);
-			CommonServerPushCallbackOpenUrl callback = new CommonServerPushCallbackOpenUrl();
-			callback.setUrl(url);
-			callback.setOpenInNewTab(true);
-			pushUpdateUi.executeAsync (callback);
-
-			tbUrlWithCode.setEnabled(true);
-			//tbPeriodKey.setEnabled(true);
-			btnLegal.setEnabled(true);
-			btnSend.setEnabled(false);
-
-		}
-		else if (event.getTarget() == btnSend) {
-
-			//String periodKey = tbPeriodKey.getValue();
-			Calendar periodCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct.getValue());
-			LocalDate dateAcctLocal = ((Timestamp) fieldDateAcct.getValue()).toLocalDateTime().toLocalDate();
-			//String periodKey = String.valueOf(periodCal.get(Calendar.YEAR)) + "B" + String.valueOf((periodCal.get(Calendar.MONTH) / 3) + 1);
-			String periodKey = String.valueOf(periodCal.get(Calendar.YEAR) - 2000) + periodDelimiter + String.valueOf(dateAcctLocal.get(IsoFields.QUARTER_OF_YEAR));
-			if (Util.isEmpty(periodKey))
-				throw new WrongValueException(tbPeriodKey, "Period key must be set !");
-
-			if (Util.isEmpty(tbUrlWithCode.getValue()))
-				throw new WrongValueException(tbUrlWithCode, "You did not past the URL !");
-
-			String url = tbUrlWithCode.getValue();
-
-			int pos = url.indexOf("?code=");
-			if (pos <= 0)
-				throw new WrongValueException(tbUrlWithCode, "URL doesn't contain code !");
-
-			String code = url.substring(pos + 6);
-			System.out.println("url  = " + url);
-			System.out.println("code = " + code);
-
-			String msg = HmrcUtil.sendReturnData(code, 
-										   periodKey, 
-										   Double.parseDouble(tbvatDueSales.getValue()),
-										   Double.parseDouble(tbvatDueAcquisitions.getValue()),
-										   Double.parseDouble(tbtotalVatDue.getValue()),
-										   Double.parseDouble(tbvatReclaimedCurrPeriod.getValue()),
-										   Double.parseDouble(tbnetVatDue.getValue()),
-										   Double.parseDouble(tbtotalValueSalesExVAT.getValue()),
-										   Double.parseDouble(tbtotalValuePurchasesExVAT.getValue()),
-										   Double.parseDouble(tbtotalValueGoodsSuppliedExVAT.getValue()),
-										   Double.parseDouble(tbtotalAcquisitionsExVAT.getValue()),
-										   finalised
-										   );
-			tbResult.setValue(msg.toString());
-
-			if (msg.startsWith("Error")) {
-				FDialog.error(getWindowNo(), "Error", msg);
-				btnAuthorize.setEnabled(true);
-			}
-			else
-				FDialog.info(getWindowNo(), this, "", msg);
-
-		}
-		else if (event.getTarget() == btnSelect) {
+		if (event.getTarget() == btnSelect) {
 
 			if(fieldDateAcct.getValue()==null)
 				throw new WrongValueException(fieldDateAcct.getComponent(), "StartDate must be set !");
@@ -401,6 +339,22 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 //				
 
 		}		
+		else if (event.getTarget() == btnAuthorize) {
+			String url = HmrcUtil.getAuthorizationRequestUrl(scope);
+
+			Desktop desktop = AEnv.getDesktop();
+			ServerPushTemplate pushUpdateUi = new ServerPushTemplate (desktop);
+			CommonServerPushCallbackOpenUrl callback = new CommonServerPushCallbackOpenUrl();
+			callback.setUrl(url);
+			callback.setOpenInNewTab(true);
+			pushUpdateUi.executeAsync (callback);
+
+			tbUrlWithCode.setEnabled(true);
+			//tbPeriodKey.setEnabled(true);
+			btnLegal.setEnabled(true);
+			btnSend.setEnabled(false);
+
+		}
 		else if (event.getTarget() == btnLegal) {
 			String msg = "Thank you for accepting the legal declaration";
 			FDialog.info(getWindowNo(), this, "", msg);
@@ -409,6 +363,52 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 			btnAuthorize.setEnabled(false);
 			btnSend.setEnabled(true);
 			finalised = true;
+
+		}
+		else if (event.getTarget() == btnSend) {
+
+			//String periodKey = tbPeriodKey.getValue();
+			Calendar periodCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct.getValue());
+			LocalDate dateAcctLocal = ((Timestamp) fieldDateAcct.getValue()).toLocalDateTime().toLocalDate();
+			//String periodKey = String.valueOf(periodCal.get(Calendar.YEAR)) + "B" + String.valueOf((periodCal.get(Calendar.MONTH) / 3) + 1);
+			String periodKey = String.valueOf(periodCal.get(Calendar.YEAR) - 2000) + periodDelimiter + String.valueOf(dateAcctLocal.get(IsoFields.QUARTER_OF_YEAR));
+			if (Util.isEmpty(periodKey))
+				throw new WrongValueException(tbPeriodKey, "Period key must be set !");
+
+			if (Util.isEmpty(tbUrlWithCode.getValue()))
+				throw new WrongValueException(tbUrlWithCode, "You did not past the URL !");
+
+			String url = tbUrlWithCode.getValue();
+
+			int pos = url.indexOf("?code=");
+			if (pos <= 0)
+				throw new WrongValueException(tbUrlWithCode, "URL doesn't contain code !");
+
+			String code = url.substring(pos + 6);
+			System.out.println("url  = " + url);
+			System.out.println("code = " + code);
+
+			String msg = HmrcUtil.sendReturnData(code, 
+										   periodKey, 
+										   Double.parseDouble(tbvatDueSales.getValue()),
+										   Double.parseDouble(tbvatDueAcquisitions.getValue()),
+										   Double.parseDouble(tbtotalVatDue.getValue()),
+										   Double.parseDouble(tbvatReclaimedCurrPeriod.getValue()),
+										   Double.parseDouble(tbnetVatDue.getValue()),
+										   Double.parseDouble(tbtotalValueSalesExVAT.getValue()),
+										   Double.parseDouble(tbtotalValuePurchasesExVAT.getValue()),
+										   Double.parseDouble(tbtotalValueGoodsSuppliedExVAT.getValue()),
+										   Double.parseDouble(tbtotalAcquisitionsExVAT.getValue()),
+										   finalised
+										   );
+			tbResult.setValue(msg.toString());
+
+			if (msg.startsWith("Error")) {
+				FDialog.error(getWindowNo(), "Error", msg);
+				btnAuthorize.setEnabled(true);
+			}
+			else
+				FDialog.info(getWindowNo(), this, "", msg);
 
 		}
 

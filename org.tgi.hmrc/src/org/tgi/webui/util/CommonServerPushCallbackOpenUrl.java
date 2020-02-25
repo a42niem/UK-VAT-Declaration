@@ -1,6 +1,7 @@
 package org.tgi.webui.util;
 
 import org.adempiere.webui.util.IServerPushCallback;
+import org.zkoss.zk.ui.Execution;
 import org.zkoss.zk.ui.Executions;
 
 /**
@@ -10,7 +11,8 @@ public class CommonServerPushCallbackOpenUrl implements IServerPushCallback {
 
 	private String m_url = "";
 	private boolean m_openInNewTab = false;
-
+	private Execution m_currEx = null;
+	
 	public void setUrl(String url) {
 		m_url = url;
 	}
@@ -21,7 +23,8 @@ public class CommonServerPushCallbackOpenUrl implements IServerPushCallback {
 
 	@Override
 	public void updateUI() {
-		Executions.getCurrent().sendRedirect(m_url, m_openInNewTab ? "_blank" : "_self");
+		m_currEx = Executions.getCurrent();
+		m_currEx.sendRedirect(m_url, m_openInNewTab ? "hmrcpopup" : "_self");
 	}
-
+	
 }

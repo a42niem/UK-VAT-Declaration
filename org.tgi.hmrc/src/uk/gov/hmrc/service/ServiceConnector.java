@@ -9,6 +9,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.tgi.util.HmrcUtil;
 
 import uk.gov.hmrc.model.UnauthorizedException;
 
@@ -29,7 +30,15 @@ public class ServiceConnector {
         if (bearerToken.isPresent()) {
             request.addHeader("Authorization", "Bearer " + bearerToken.get());
         }
-
+        // Fraud-Prevention-Headers for application connection method "OTHER_DIRECT"
+        request.addHeader("Gov-Client-Connection-Method", "OTHER_DIRECT");
+        request.addHeader("Gov-Client-Public-IP", HmrcUtil.publicIP);
+//      request.addHeader("Gov-Client-Device-ID", "WEB_APP_VIA_SERVER");
+//      request.addHeader("Gov-Client-Connection-Method", "WEB_APP_VIA_SERVER");
+//      request.addHeader("Gov-Client-Connection-Method", "WEB_APP_VIA_SERVER");
+//      request.addHeader("Gov-Client-Connection-Method", "WEB_APP_VIA_SERVER");
+        // Sandbox Test data
+        request.addHeader("Gov-Test-Scenario", "MULTIPLE_LIABILITIES");
         try {
             HttpResponse response = client.execute(request);
 

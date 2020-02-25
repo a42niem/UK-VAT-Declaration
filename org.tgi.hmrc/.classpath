@@ -5,7 +5,11 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins">
+		<accessrules>
+			<accessrule kind="accessible" pattern="org/zkoss/zhtml/**"/>
+		</accessrules>
+	</classpathentry>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/guava-17.0.jar"/>
@@ -18,6 +22,6 @@
 	<classpathentry kind="lib" path="lib/json-20171018.jar"/>
 	<classpathentry kind="lib" path="lib/httpcore-4.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/org.apache.oltu.oauth2.common-1.0.2.jar"/>
-	<classpathentry kind="lib" path="lib/org.apache.oltu.oauth2.client-1.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/org.apache.oltu.oauth2.client-1.0.2.jar" sourcepath="/home/niem/projekte/idempiere/nmicoud/org.apache.oltu.oauth2.parent-1.0.2"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

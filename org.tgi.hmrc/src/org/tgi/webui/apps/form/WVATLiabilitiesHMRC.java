@@ -34,7 +34,7 @@ import org.zkoss.zul.Vlayout;
  * @author a42niem, action 42 GmbH
  */
 
-public class WVATObligationHMRC extends ADForm implements EventListener<Event> {
+public class WVATLiabilitiesHMRC extends ADForm implements EventListener<Event> {
 
 	private static final long serialVersionUID = -8528918348159236707L;
 
@@ -43,12 +43,10 @@ public class WVATObligationHMRC extends ADForm implements EventListener<Event> {
 	private Button btnAuthorize, btnSend, btnSelect;
 	private Label labelDateAcct = new Label();
 	private Label labelDateAcct2 = new Label();
-	private Label labelStatus = new Label();
 
 	private WDateEditor  fieldDateAcct = new WDateEditor();
 	private WDateEditor  fieldDateAcct2 = new WDateEditor();
 
-	Textbox tbStatus = new Textbox();
 	Textbox tbResult = new Textbox();
 	Textbox tbUrlWithCode = new Textbox();
 		
@@ -81,7 +79,6 @@ public class WVATObligationHMRC extends ADForm implements EventListener<Event> {
 
 		labelDateAcct.setText(Msg.translate(Env.getCtx(), "DateAcct"));
 		labelDateAcct2.setText("-");
-		tbStatus.setPlaceholder(Msg.translate(Env.getCtx(), "(O)pen | (F)ulfilled | empty"));
 		btnSelect = new Button("1. Check query data ");
 		btnSelect.addEventListener(Events.ON_CLICK, this);
 
@@ -91,8 +88,6 @@ public class WVATObligationHMRC extends ADForm implements EventListener<Event> {
 		hl0.appendChild(fieldDateAcct.getComponent());
 		hl0.appendChild(labelDateAcct2);
 		hl0.appendChild(fieldDateAcct2.getComponent());
-		hl0.appendChild(labelStatus);
-		hl0.appendChild(tbStatus);
 		hl0.appendChild(btnSelect);
 
 		Vlayout vl = new Vlayout();
@@ -133,9 +128,9 @@ public class WVATObligationHMRC extends ADForm implements EventListener<Event> {
 		
 		if (event.getTarget() == btnSelect) {
 
-			if(tbStatus.getValue().compareTo("O") != 0 && fieldDateAcct.getValue()==null)
+			if( fieldDateAcct.getValue()==null)
 				throw new WrongValueException(fieldDateAcct.getComponent(), "StartDate must be set !");
-			if(tbStatus.getValue().compareTo("O") != 0 && fieldDateAcct2.getValue()==null)
+			if(fieldDateAcct2.getValue()==null)
 				throw new WrongValueException(fieldDateAcct2.getComponent(), "EndDate must be set !");
 
 			btnAuthorize.setEnabled(true);
@@ -197,11 +192,9 @@ public class WVATObligationHMRC extends ADForm implements EventListener<Event> {
 				           + ((day < 10) ? "0" : "") + String.valueOf(day);
 			}
 			
-			String msg = HmrcUtil.getObligations(code,
+			String msg = HmrcUtil.getLiabilities(code,
 												 fromDate, 
-												 toDate, 
-												 tbStatus.getValue()
-										   		);
+												 toDate);
 			tbResult.setValue(msg.toString());
 
 			if (msg.startsWith("Error")) {

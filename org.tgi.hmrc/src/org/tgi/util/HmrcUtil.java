@@ -5,6 +5,7 @@ import static org.tgi.model.SystemIDs_Tgi.XXR_VAT_RETURN_REFERENCE_ID;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.util.IProcessUI;
@@ -16,8 +17,11 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.tgi.model.MTXXRReport;
 
+import uk.gov.hmrc.model.Liability;
+import uk.gov.hmrc.model.TaxPeriod;
 import uk.gov.hmrc.model.Token;
 import uk.gov.hmrc.model.UnauthorizedException;
+import uk.gov.hmrc.model.VATLiabilitiesResponse;
 import uk.gov.hmrc.model.VATObligation;
 import uk.gov.hmrc.model.VATObligationResponse;
 import uk.gov.hmrc.model.VATReturn;
@@ -34,11 +38,12 @@ public class HmrcUtil {
 	private final static String vrn = "736547705";
 	private final static String callbackUrl = "https://nostromo:8443"; // must be set in Application > Manage redirect URIs
 	//private final static String callbackUrl = "https://devuan.alfredkochen.de:8443"; // must be set in Application > Manage redirect URIs
-	public final static String publicIP = "87.139,125.175"; // 
+	public final static String publicIP = "87.139.125.175"; // 
 	private final static String clientId = "L_fjrRZZMhWMS1miZv4AarJXHxMa";
 	private final static String scope="write:vat";
 	private final static String urlHmrc="https://test-api.service.hmrc.gov.uk";
-	private final static String clientSecret = "a0677ce4-c729-4eb0-99c3-6a28743f5371";
+	//private final static String clientSecret = "a0677ce4-c729-4eb0-99c3-6a28743f5371";
+	private final static String clientSecret = "f81c2994-3ffc-4ba2-bd43-c6782e832317";
 	private final static String serverToken = "a15618d72d3aad6eda1822e2fbb8144";
 
 	// Create user: https://developer.service.hmrc.gov.uk/api-test-user
@@ -525,8 +530,10 @@ public class HmrcUtil {
 
 		return retValue;
 	}
+	
 	public static String getVATObligations(OauthService oauthservice, VATService vatservice, String code, 
-			                               String vrn, String dateFrom, String dateTo, String status) throws IOException, UnauthorizedException {		
+			                               String vrn, String dateFrom, String dateTo, String status) 
+			                               throws IOException, UnauthorizedException {		
 
 		String jsonResponse;
 		Token token = oauthservice.getToken(code);
@@ -569,7 +576,62 @@ public class HmrcUtil {
 
 			return msg.toString();
 		}
-
 	}
+	
+
+	public static String getLiabilities(String code, String dateFrom, String dateTo) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				new  ServiceConnector());
+
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = getVATLiabilities(oauthservice, vatservice, code, vrn, dateFrom, dateTo);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return retValue;
+	}
+
+	public static String getVATLiabilities(OauthService oauthservice, VATService vatservice, String code, 
+			String vrn, String dateFrom, String dateTo) 
+					throws IOException, UnauthorizedException {		
+
+		String jsonResponse;
+		Token token = oauthservice.getToken(code);
+		try {
+
+			jsonResponse = vatservice.vatLiabilities(token.getAccessToken(), vrn, dateFrom, dateTo);
+		} catch (UnauthorizedException ue) {
+			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
+			jsonResponse = vatservice.vatLiabilities(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo);
+		}
+
+		if (jsonResponse.contains("code") || jsonResponse.contains("statusCode")) {
+			return jsonResponse;
+		}
+		else { // 200
+			System.out.println(jsonResponse.toString());
+
+			VATLiabilitiesResponse vatLiabilitiesResponse=VATParser.fromJsonLiabilities(jsonResponse);
+
+			List<Liability> liabilities = vatLiabilitiesResponse.getLiabilities();
+			StringBuilder msg = new StringBuilder("Liabilities: \n");
+			for (Liability liability : liabilities) {
+				msg.append("- TaxPeriod from ").append(liability.getTaxPeriod().getFrom())
+				.append(" to ").append(liability.getTaxPeriod().getTo()).append(" - ")
+				.append("Type=").append(liability.getType()).append(" \n ")
+				.append("-- Original Amount=").append(liability.getOriginalAmount()).append(" - ")
+				.append("Outstanding Amount=").append(liability.getOutstandingAmount()).append(" - ")
+				.append("Due Date=").append(liability.getDue()).append(" \n ");
+			}
+
+			return msg.toString();
+		}
+	}
+
 
 }
