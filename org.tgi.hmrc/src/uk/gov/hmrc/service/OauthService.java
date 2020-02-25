@@ -46,8 +46,8 @@ public class OauthService extends HmrcService {
                     .setCode(code)
                     .buildBodyMessage();
             
-            request.addHeader("Accept", "application/json");
-            request.addHeader("Content-Type", "application/json");
+            //request.addHeader("Accept", "application/json");
+            //request.addHeader("Content-Type", "application/json");
 
             return fetchToken(request);
 
