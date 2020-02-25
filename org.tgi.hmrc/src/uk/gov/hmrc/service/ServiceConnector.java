@@ -32,10 +32,10 @@ public class ServiceConnector {
         }
 
         // Fraud-Prevention-Headers for application connection method "OTHER_DIRECT"
-//        request.addHeader("Gov-Client-Connection-Method", "OTHER_DIRECT");
-//        request.addHeader("Gov-Client-Public-IP", HmrcUtil.publicIP);
+        request.addHeader("Gov-Client-Connection-Method", "OTHER_DIRECT");
+        request.addHeader("Gov-Client-Public-IP", HmrcUtil.publicIP);
         // Sandbox Test data
-//        request.addHeader("Gov-Test-Scenario", "MULTIPLE_LIABILITIES");
+        request.addHeader("Gov-Test-Scenario", "MULTIPLE_PAYMENTS");
 
         try {
             HttpResponse response = client.execute(request);

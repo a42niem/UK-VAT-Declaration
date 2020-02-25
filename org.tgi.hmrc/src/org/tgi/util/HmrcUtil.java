@@ -18,12 +18,14 @@ import org.compiere.util.Env;
 import org.tgi.model.MTXXRReport;
 
 import uk.gov.hmrc.model.Liability;
+import uk.gov.hmrc.model.Payment;
 import uk.gov.hmrc.model.TaxPeriod;
 import uk.gov.hmrc.model.Token;
 import uk.gov.hmrc.model.UnauthorizedException;
 import uk.gov.hmrc.model.VATLiabilitiesResponse;
 import uk.gov.hmrc.model.VATObligation;
 import uk.gov.hmrc.model.VATObligationResponse;
+import uk.gov.hmrc.model.VATPaymentsResponse;
 import uk.gov.hmrc.model.VATReturn;
 import uk.gov.hmrc.model.VATReturnResponse;
 import uk.gov.hmrc.parser.VATParser;
@@ -633,5 +635,61 @@ public class HmrcUtil {
 		}
 	}
 
+	public static String getPayments(String code, String dateFrom, String dateTo) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				new  ServiceConnector());
+
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = getVATPayments(oauthservice, vatservice, code, vrn, dateFrom, dateTo);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return retValue;
+	}
+
+	public static String getVATPayments(OauthService oauthservice, VATService vatservice, String code, 
+			String vrn, String dateFrom, String dateTo) 
+					throws IOException, UnauthorizedException {		
+
+		String jsonResponse;
+		Token token = oauthservice.getToken(code);
+		try {
+
+			jsonResponse = vatservice.vatPayments(token.getAccessToken(), vrn, dateFrom, dateTo);
+		} catch (UnauthorizedException ue) {
+			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
+			jsonResponse = vatservice.vatPayments(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo);
+		}
+
+		if (jsonResponse.contains("code") || jsonResponse.contains("statusCode")) {
+			return jsonResponse;
+		}
+		else { // 200
+			System.out.println(jsonResponse.toString());
+
+			VATPaymentsResponse vatPaymentsResponse=VATParser.fromJsonPayments(jsonResponse);
+
+			List<Payment> payments = vatPaymentsResponse.getPayments();
+			StringBuilder msg = new StringBuilder("Payments: \n");
+			for (Payment payment : payments) {
+				msg.append("- Amount ").append(payment.getAmount());
+				if (payment.getReceived() != null) {
+					msg.append(" received ").append(payment.getReceived());
+				}
+				else {
+					msg.append(" without date ");
+				}
+				
+				msg.append(" \n ");
+			}
+
+			return msg.toString();
+		}
+	}
 
 }

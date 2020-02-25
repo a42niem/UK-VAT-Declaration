@@ -57,6 +57,18 @@ public class VATService extends HmrcService{
 				Optional.of(accessToken));
 	}
 	
+	public String vatPayments(String accessToken, String vrn, String from, String to) throws UnauthorizedException {
+		String url = urlHmrc+"/organisations/vat/"+vrn+"/payments";
+		url = url + "?";
+		url = url + "from=" + from + "&";
+		url = url + "to=" + to ;
+
+		return serviceConnector.get(
+				url,
+				"application/vnd.hmrc.1.0+json",
+				Optional.of(accessToken));
+	}
+	
 	@Override
 	public String toString() {
 		return "VATService {" + "urlHmrc = " + urlHmrc +

@@ -1,0 +1,216 @@
+package org.tgi.webui.apps.form;
+
+import java.sql.Timestamp;
+import java.util.Calendar;
+
+import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Label;
+import org.adempiere.webui.component.Textbox;
+import org.adempiere.webui.editor.WDateEditor;
+import org.adempiere.webui.panel.ADForm;
+import org.adempiere.webui.util.ServerPushTemplate;
+import org.adempiere.webui.util.ZKUpdateUtil;
+import org.adempiere.webui.window.FDialog;
+import org.compiere.util.Env;
+import org.compiere.util.Msg;
+import org.compiere.util.TimeUtil;
+import org.compiere.util.Util;
+import org.tgi.util.HmrcUtil;
+import org.tgi.webui.util.CommonServerPushCallbackOpenUrl;
+import org.zkoss.zk.ui.Desktop;
+import org.zkoss.zk.ui.WrongValueException;
+import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zul.Borderlayout;
+import org.zkoss.zul.Center;
+import org.zkoss.zul.Hlayout;
+import org.zkoss.zul.North;
+import org.zkoss.zul.Vlayout;
+
+/**
+ * Panel used to query HMRC VAT obligations
+ * @author a42niem, action 42 GmbH
+ */
+
+public class WVATPaymentsHMRC extends ADForm implements EventListener<Event> {
+
+	private static final long serialVersionUID = -8528918348159236707L;
+
+	private final static String scope="read:vat";
+	
+	private Button btnAuthorize, btnSend, btnSelect;
+	private Label labelDateAcct = new Label();
+	private Label labelDateAcct2 = new Label();
+
+	private WDateEditor  fieldDateAcct = new WDateEditor();
+	private WDateEditor  fieldDateAcct2 = new WDateEditor();
+
+	Textbox tbResult = new Textbox();
+	Textbox tbUrlWithCode = new Textbox();
+		
+	private CommonServerPushCallbackOpenUrl callback = null;
+	
+	protected void initForm() {
+		try {
+			init();
+
+		}
+		catch (Exception e) {
+			logger.severe("Error when opening Test HMRC form : " + e);
+		}
+	}
+
+	private void init() throws Exception {
+		this.setHeight("100%");
+
+		Borderlayout mainLayout = new Borderlayout();
+		mainLayout.setStyle("width: 100%; height: 100%; position: absolute;");
+		appendChild(mainLayout);
+
+		North north = new North();
+		mainLayout.appendChild(north);
+		ZKUpdateUtil.setVflex(north, "1");
+
+		Center center = new Center();
+		mainLayout.appendChild(center);
+		center.setAutoscroll(true);
+
+		labelDateAcct.setText(Msg.translate(Env.getCtx(), "DateAcct"));
+		labelDateAcct2.setText("-");
+		btnSelect = new Button("1. Check query data ");
+		btnSelect.addEventListener(Events.ON_CLICK, this);
+
+		Hlayout hl0 = new Hlayout();
+		hl0.setValign("middle");
+		hl0.appendChild(labelDateAcct);
+		hl0.appendChild(fieldDateAcct.getComponent());
+		hl0.appendChild(labelDateAcct2);
+		hl0.appendChild(fieldDateAcct2.getComponent());
+		hl0.appendChild(btnSelect);
+
+		Vlayout vl = new Vlayout();
+		vl.appendChild(hl0);
+		
+		btnAuthorize = new Button("2. Request an OAuth 2.0 authorisation code with the required scope");
+		btnAuthorize.addEventListener(Events.ON_CLICK, this);
+
+		Hlayout hl = new Hlayout();
+		hl.setValign("middle");
+		hl.appendChild(btnAuthorize);
+		vl.appendChild(hl);
+
+
+		btnSend = new Button("3. Exchange the OAuth 2.0 authorisation code for an access token and get data");
+		btnSend.addEventListener(Events.ON_CLICK, this);
+
+		vl.appendChild(tbUrlWithCode);
+						
+		vl.appendChild(btnSend);
+		vl.appendChild(tbResult);
+
+		center.appendChild(vl);
+
+		tbResult.setRows(10);
+		tbResult.setHflex("true");
+		tbUrlWithCode.setPlaceholder("Paste URL starting with idempiere.alfredkochen.de and containing ?code=");
+		tbUrlWithCode.setHflex("true");
+
+		tbUrlWithCode.setEnabled(false);
+		btnAuthorize.setEnabled(false);
+		btnSend.setEnabled(false);
+
+	}
+
+	public void onEvent(Event event) throws Exception {
+
+		
+		if (event.getTarget() == btnSelect) {
+
+			if( fieldDateAcct.getValue()==null)
+				throw new WrongValueException(fieldDateAcct.getComponent(), "StartDate must be set !");
+			if(fieldDateAcct2.getValue()==null)
+				throw new WrongValueException(fieldDateAcct2.getComponent(), "EndDate must be set !");
+
+			btnAuthorize.setEnabled(true);
+			tbUrlWithCode.setText("");
+			btnSend.setEnabled(false);
+
+		}		
+		else if (event.getTarget() == btnAuthorize) {
+			String url = HmrcUtil.getAuthorizationRequestUrl(scope);
+
+			Desktop desktop = AEnv.getDesktop();
+			ServerPushTemplate pushUpdateUi = new ServerPushTemplate (desktop);
+			callback = new CommonServerPushCallbackOpenUrl();
+			callback.setUrl(url);
+			callback.setOpenInNewTab(true);
+			pushUpdateUi.executeAsync (callback);
+
+			tbUrlWithCode.setEnabled(true);
+			btnSend.setEnabled(true);
+
+		}
+		else if (event.getTarget() == btnSend) {
+
+			if (Util.isEmpty(tbUrlWithCode.getValue()))
+				throw new WrongValueException(tbUrlWithCode, "You did not past the URL !");
+
+			String url = tbUrlWithCode.getValue();
+
+			int pos = url.indexOf("?code=");
+			if (pos <= 0)
+				throw new WrongValueException(tbUrlWithCode, "URL doesn't contain code !");
+
+			String code = url.substring(pos + 6);
+			System.out.println("url  = " + url);
+			System.out.println("code = " + code);
+
+			String year = null;
+			int month = 0;
+			int day = 0;
+			String fromDate = null;
+			if (fieldDateAcct.getValue() != null) {
+				Calendar fromCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct.getValue());
+				year = String.valueOf(fromCal.get(Calendar.YEAR));
+				month = fromCal.get(Calendar.MONTH);
+				day = fromCal.get(Calendar.DAY_OF_MONTH);
+				fromDate = year + "-" 
+				           + ((month < 10) ? "0" : "") + String.valueOf(month+1) + "-"
+				           + ((day < 10) ? "0" : "") + String.valueOf(day);
+			}
+			
+			String toDate = null;
+			if (fieldDateAcct2.getValue() != null) {
+				Calendar toCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct2.getValue());
+				year = String.valueOf(toCal.get(Calendar.YEAR));
+				month = toCal.get(Calendar.MONTH);
+				day = toCal.get(Calendar.DAY_OF_MONTH);
+				toDate = year + "-" 
+				           + ((month < 10) ? "0" : "") + String.valueOf(month+1) + "-"
+				           + ((day < 10) ? "0" : "") + String.valueOf(day);
+			}
+			
+			String msg = HmrcUtil.getPayments(code,
+												 fromDate, 
+												 toDate);
+			tbResult.setValue(msg.toString());
+
+			if (msg.startsWith("Error")) {
+				FDialog.error(getWindowNo(), "Error", msg);
+				btnAuthorize.setEnabled(true);
+				tbUrlWithCode.setText("");
+			}
+			else {
+				FDialog.info(getWindowNo(), this, "", msg);
+				btnAuthorize.setEnabled(false);
+				tbUrlWithCode.setText("");
+				btnSend.setEnabled(false);
+			}
+
+
+		}
+
+	}
+}
