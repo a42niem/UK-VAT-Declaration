@@ -1,6 +1,7 @@
 package org.tgi.model;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Properties;
 
 public class MTXXRReport {
@@ -35,6 +36,42 @@ public class MTXXRReport {
 	}
 
 	public void saveEx() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public static BigDecimal getConvertedAmt(Properties ctx, int ad_Client_ID, BigDecimal amt, int c_Currency_ID,
+			int totalAmtCurrencyID, Timestamp dateInvoiced) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void setDescription(String name) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setC_Invoice_C_Currency_ID(int c_Currency_ID) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setConvertedAmt(BigDecimal convertedAmt) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setC_Currency_ID(int totalAmtCurrencyID) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setDateAcct(Timestamp dateAcct) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setComments(String string) {
 		// TODO Auto-generated method stub
 		
 	}

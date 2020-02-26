@@ -28,4 +28,4 @@ Bundle-ClassPath: .,
  lib/org.apache.oltu.oauth2.client-1.0.2.jar,
  lib/org.apache.oltu.oauth2.common-1.0.2.jar
 Bundle-ActivationPolicy: lazy
-Service-Component: OSGI-INF/mtdformfactoy.xml
+Service-Component: OSGI-INF/*.xml
