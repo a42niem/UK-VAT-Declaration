@@ -27,7 +27,7 @@ public class MTDProcessFactory implements IProcessFactory {
 			here = true;
 		}
 		if (className.equals(XXR_TaxDeclarationApprove.class.getName())) {
-			className = "de.tgi.process.XXR_TaxDeclarationApprove";
+			className = "org.tgi.process.XXR_TaxDeclarationApprove";
 			here = true;
 		}
 		if (here) {
