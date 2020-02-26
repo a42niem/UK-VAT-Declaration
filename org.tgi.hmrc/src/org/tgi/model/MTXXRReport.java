@@ -1,79 +1,47 @@
 package org.tgi.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.Properties;
 
-public class MTXXRReport {
+import org.compiere.model.MConversionRate;
+import org.compiere.model.MCurrency;
+import org.tgi.model.X_T_XXR_Report;
 
-	public MTXXRReport(Properties ctx, int i, int instanceID, String trxName) {
-		// TODO Auto-generated constructor stub
+public class MTXXRReport extends X_T_XXR_Report {
+
+	private static final long serialVersionUID = 524710324947300840L;
+
+	public MTXXRReport(Properties ctx, int T_XXR_Report_ID, String trxName) {
+		super(ctx, T_XXR_Report_ID, trxName);
 	}
 
-	public void setCode(String value) {
-		// TODO Auto-generated method stub
-		
+	public MTXXRReport (Properties ctx, int T_XXR_Report_ID, int instanceID, String trxName) {
+		super (ctx, T_XXR_Report_ID, trxName);
+		setAD_PInstance_ID(instanceID);
+	}	//	MTXXRReport
+
+	/** Convert the amount in project currency at sysdate */
+	public static BigDecimal getConvertedAmt(Properties ctx, int clientID, BigDecimal amt, int currencyFromID, int currencyToID, Timestamp convDate) {
+		return MConversionRate.convert (ctx, amt, currencyFromID, currencyToID, convDate, 0, clientID, 0);
 	}
 
-	public void setName(String name) {
-		// TODO Auto-generated method stub
-		
+	/** Get the rate for currencies at given date */
+	public static BigDecimal getRate(Properties ctx, int clientID, int currencyFromID, int currencyToID, Timestamp convDate) {
+		return MConversionRate.getRate(currencyFromID, currencyToID, convDate, 0, clientID, 0);
 	}
 
-	public void setAD_Org_ID(int ad_Org_ID) {
-		// TODO Auto-generated method stub
-		
-	}
+	/** Convert the amount in the desired currency using the rate (see MConversionRate.convert) */
+	public static BigDecimal convert(Properties ctx, BigDecimal amt, BigDecimal rate, int currencyToID) {
 
-	public void setC_Invoice_ID(int invoiceID) {
-		// TODO Auto-generated method stub
-		
-	}
+		BigDecimal retValue = rate.multiply(amt);
+		int stdPrecision = MCurrency.getStdPrecision(ctx, currencyToID);		
 
-	public void setAmount(BigDecimal amt) {
-		// TODO Auto-generated method stub
-		
-	}
+		if (retValue.scale() > stdPrecision)
+			retValue = retValue.setScale(stdPrecision, RoundingMode.HALF_UP);
 
-	public void saveEx() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public static BigDecimal getConvertedAmt(Properties ctx, int ad_Client_ID, BigDecimal amt, int c_Currency_ID,
-			int totalAmtCurrencyID, Timestamp dateInvoiced) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void setDescription(String name) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setC_Invoice_C_Currency_ID(int c_Currency_ID) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setConvertedAmt(BigDecimal convertedAmt) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setC_Currency_ID(int totalAmtCurrencyID) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setDateAcct(Timestamp dateAcct) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setComments(String string) {
-		// TODO Auto-generated method stub
-		
+		return retValue;
 	}
 
 }
