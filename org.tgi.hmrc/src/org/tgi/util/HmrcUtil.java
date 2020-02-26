@@ -174,7 +174,7 @@ public class HmrcUtil {
 				taf.setConvertedAmt(MTXXRReport.getConvertedAmt(ctx, i.getAD_Client_ID(), amt, i.getC_Currency_ID(), totalAmtCurrencyID, i.getDateInvoiced()));
 				taf.setC_Currency_ID(totalAmtCurrencyID);
 				taf.setDateAcct(i.getDateAcct());
-				taf.setComments("ReverseCharge");
+				taf.setDescription("ReverseCharge");
 				taf.saveEx();
 			}
 		}
