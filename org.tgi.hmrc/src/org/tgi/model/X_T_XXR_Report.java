@@ -219,6 +219,23 @@ public class X_T_XXR_Report extends PO implements I_T_XXR_Report, I_Persistent
 		return (String)get_Value(COLUMNNAME_Code);
 	}
 
+	/** Set Comments.
+		@param Comments 
+		Comments or additional information
+	  */
+	public void setComments (String Comments)
+	{
+		set_Value (COLUMNNAME_Comments, Comments);
+	}
+
+	/** Get Comments.
+		@return Comments or additional information
+	  */
+	public String getComments () 
+	{
+		return (String)get_Value(COLUMNNAME_Comments);
+	}
+
 	/** Set Converted Amount.
 		@param ConvertedAmt 
 		Converted Amount
