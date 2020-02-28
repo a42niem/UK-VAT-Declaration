@@ -22,6 +22,10 @@ public class MTDProcessFactory implements IProcessFactory {
 		log.log(Level.WARNING, "MTDProcessFactory.newProcessInstance ");
 		ProcessCall process = null;
 		boolean here = false; 
+		if (className.equals(XXR_ReportVAT.class.getName())) {
+			className = "org.tgi.process.XXR_ReportVAT";
+			here = true;
+		}
 		if (className.equals(XXR_TaxDeclarationPrepare.class.getName())) {
 			className = "org.tgi.process.XXR_TaxDeclarationPrepare";
 			here = true;
