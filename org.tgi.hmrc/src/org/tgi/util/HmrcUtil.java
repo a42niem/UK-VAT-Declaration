@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.util.IProcessUI;
@@ -25,8 +26,14 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.tgi.model.MTXXRReport;
 
+import uk.gov.hmrc.model.Liability;
+import uk.gov.hmrc.model.Payment;
 import uk.gov.hmrc.model.Token;
 import uk.gov.hmrc.model.UnauthorizedException;
+import uk.gov.hmrc.model.VATLiabilitiesResponse;
+import uk.gov.hmrc.model.VATObligation;
+import uk.gov.hmrc.model.VATObligationResponse;
+import uk.gov.hmrc.model.VATPaymentsResponse;
 import uk.gov.hmrc.model.VATReturn;
 import uk.gov.hmrc.model.VATReturnResponse;
 import uk.gov.hmrc.parser.VATParser;
@@ -48,6 +55,8 @@ public class HmrcUtil {
 
 	private final static int europeOrgID = MSysConfig.getIntValue(XXR_HMRC_RUBRIC_EUROPE_ORG_ID, -1, Env.getAD_Client_ID(Env.getCtx())); //1000001; // Europe
 	private final static int ukCountryID = 333;
+	private final static int ukSalesTaxID = 1000022;
+	private final static int ukTaxID = 1000021;
 	private final static int ecCountryGroupID = MSysConfig.getIntValue(XXR_HMRC_EC_COUNTRYGROUP_ID, -1, Env.getAD_Client_ID(Env.getCtx())); //1000000; // EU
 //	private final static int usdCurrencyID = MCurrency.get(Env.getCtx(), "USD").getC_Currency_ID();
 //	private final static int gbpCurrencyID = MCurrency.get(Env.getCtx(), "GBP").getC_Currency_ID();
@@ -68,10 +77,17 @@ public class HmrcUtil {
 		return oauthservice.getAuthorizationRequestUrl(scope);
 	}
 
-	public static String sendData(String code, String periodKey, BigDecimal box1, BigDecimal box2, BigDecimal box3, BigDecimal box4, BigDecimal box5, BigDecimal box6, BigDecimal box7, BigDecimal box8, BigDecimal box9, boolean isFinalised) {
+	public static String getAuthorizationRequestUrl(String scope) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		return oauthservice.getAuthorizationRequestUrl(scope);
+	}
+
+	public static String sendData(String code, String periodKey) {
 		OauthService oauthservice = HmrcUtil.getOauthService();
 		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,new  ServiceConnector());
-		VATReturn vatReturn = new VATReturn(periodKey, box1.doubleValue(), box2.doubleValue(), box3.doubleValue(), box4.doubleValue(), box5.doubleValue(), box6.longValue(), box7.longValue(), box8.longValue(), box9.longValue(), isFinalised);
+		VATReturn vatReturn = new VATReturn(periodKey, 
+				//box1.doubleValue(), box2.doubleValue(), box3.doubleValue(), box4.doubleValue(), box5.doubleValue(), box6.longValue(), box7.longValue(), box8.longValue(), box9.longValue()isFinalised);
+				1, 2, 3, 4, 5, 6, 7, 8, 9, false);
 		
 //		Token token = oauthservice.getToken(code);
 //		System.out.println("token=" + token);
@@ -89,17 +105,17 @@ public class HmrcUtil {
 	
 	public static String doVATReturn(OauthService oauthservice, VATService vatservice, String code, String vrn, VATReturn vatReturn) throws IOException, UnauthorizedException {		
 
-		String json =VATParser.toJson(vatReturn);
+		String json = VATParser.toJson(vatReturn);
 		System.out.println(json);
 
 		String jsonResponse;
 		Token token = oauthservice.getToken(code);
 		try {
 			
-			jsonResponse =vatservice.vatReturns(token.getAccessToken(), vrn,json );
+			jsonResponse = vatservice.vatReturns(token.getAccessToken(), vrn, json );
 		} catch (UnauthorizedException ue) {
 			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
-			jsonResponse =vatservice.vatReturns(refreshedToken.getAccessToken(),vrn,json);
+			jsonResponse = vatservice.vatReturns(refreshedToken.getAccessToken(), vrn, json);
 		}
 
 //		VATReturnResponse vatReturnResponse=VATParser.fromJsonResponse(jsonResponse);		
@@ -138,7 +154,7 @@ public class HmrcUtil {
 		int taxID = 1000000; // hardcoded - faire sysconfig TODO
 		BigDecimal taxRate = MTax.get(ctx, taxID).getRate();
 		
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
 				.append(" INNER JOIN C_BPartner_Location bpl ON (i.C_BPartner_Location_ID = bpl.C_BPartner_Location_ID)")
 				.append(" INNER JOIN C_Location l ON (bpl.C_Location_ID = l.C_Location_ID)")
@@ -186,13 +202,12 @@ public class HmrcUtil {
 	/** VAT due in the period on sales and other outputs : The total of VAT on sales invoices to UK */
 	public static BigDecimal getBox1(Properties ctx, Timestamp from, Timestamp to, int instanceID, boolean isDetail, int totalAmtCurrencyID, IProcessUI iProcessUI, String trxName) {
 
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
-				.append(" INNER JOIN C_BPartner_Location bpl ON (i.C_BPartner_Location_ID = bpl.C_BPartner_Location_ID)")
-				.append(" INNER JOIN C_Location l ON (bpl.C_Location_ID = l.C_Location_ID)")
+				.append(" INNER JOIN C_InvoiceLine il ON (i.C_Invoice_ID = il.C_Invoice_ID)")
 				.append(" WHERE i.AD_Client_ID = ").append(Env.getAD_Client_ID(ctx))
 				.append(" AND i.AD_Org_ID = ").append(europeOrgID)
-				.append(" AND l.C_Country_ID = ").append(ukCountryID)
+				.append(" AND il.C_Tax_ID = ").append(ukSalesTaxID)
 				.append(" AND i.IsSOTrx = 'Y' AND i.DocStatus IN ('CO', 'CL')")
 				.append(" AND i.TotalLines != i.GrandTotal")
 				.append(" AND i.DateAcct >= ").append(DB.TO_DATE(from))
@@ -240,7 +255,7 @@ public class HmrcUtil {
 //			taf.saveEx();
 //		}
 
-		totalAmt = totalAmt.add(addReverseCharge(ctx, from, to, instanceID, isDetail, totalAmtCurrencyID, value, iProcessUI, trxName));
+		//totalAmt = totalAmt.add(addReverseCharge(ctx, from, to, instanceID, isDetail, totalAmtCurrencyID, value, iProcessUI, trxName));
 
 		return totalAmt;
 	}
@@ -248,7 +263,7 @@ public class HmrcUtil {
 	/** VAT due in the period on acquisitions from other member states of the EU : The total of VAT on purchase invoices from EC. This will always be 0 */
 	public static BigDecimal getBox2(Properties ctx, Timestamp from, Timestamp to, int instanceID, boolean isDetail, int totalAmtCurrencyID, IProcessUI iProcessUI, String trxName) {
 
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
 				.append(" INNER JOIN C_BPartner_Location bpl ON (i.C_BPartner_Location_ID = bpl.C_BPartner_Location_ID)")
 				.append(" INNER JOIN C_Location l ON (bpl.C_Location_ID = l.C_Location_ID)")
@@ -329,15 +344,12 @@ public class HmrcUtil {
 	/** VAT reclaimed in the period on purchases and other inputs (including acquisitions from the EU) : The total of purchase invoices from UK & rest of EC */
 	public static BigDecimal getBox4(Properties ctx, Timestamp from, Timestamp to, int instanceID, boolean isDetail, int totalAmtCurrencyID, IProcessUI iProcessUI, String trxName) {
 
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
-				.append(" INNER JOIN C_BPartner_Location bpl ON (i.C_BPartner_Location_ID = bpl.C_BPartner_Location_ID)")
-				.append(" INNER JOIN C_Location l ON (bpl.C_Location_ID = l.C_Location_ID)")
+				.append(" INNER JOIN C_InvoiceLine il ON (i.C_Invoice_ID = il.C_Invoice_ID)")
 				.append(" WHERE i.AD_Client_ID = ").append(Env.getAD_Client_ID(ctx))
 				.append(" AND i.AD_Org_ID = ").append(europeOrgID)
-				.append(" AND (l.C_Country_ID = ").append(ukCountryID)
-				.append(" OR l.C_Country_ID IN (SELECT C_Country_ID FROM C_CountryGroupCountry WHERE C_CountryGroup_ID = ").append(ecCountryGroupID).append(")")
-				.append(")")
+				.append(" AND il.C_Tax_ID = ").append(ukTaxID)
 				.append(" AND i.IsSOTrx = 'N' AND i.DocStatus IN ('CO', 'CL')")
 				.append(" AND i.TotalLines != i.GrandTotal")
 				.append(" AND i.DateAcct >= ").append(DB.TO_DATE(from))
@@ -385,7 +397,7 @@ public class HmrcUtil {
 //			taf.saveEx();
 //		}
 
-		totalAmt = totalAmt.add(addReverseCharge(ctx, from, to, instanceID, isDetail, totalAmtCurrencyID, value, iProcessUI, trxName));
+		//totalAmt = totalAmt.add(addReverseCharge(ctx, from, to, instanceID, isDetail, totalAmtCurrencyID, value, iProcessUI, trxName));
 
 		return totalAmt;
 	}
@@ -415,10 +427,12 @@ public class HmrcUtil {
 	/** total value of sales and all other outputs excluding any VAT : The total of sales invoices to UK, rest of EC & rest of world – excluding VAT */
 	public static BigDecimal getBox6(Properties ctx, Timestamp from, Timestamp to, int instanceID, boolean isDetail, int totalAmtCurrencyID, IProcessUI iProcessUI, String trxName) {
 
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
+				.append(" INNER JOIN C_InvoiceLine il ON (i.C_Invoice_ID = il.C_Invoice_ID)")
 				.append(" WHERE i.AD_Client_ID = ").append(Env.getAD_Client_ID(ctx))
 				.append(" AND i.AD_Org_ID = ").append(europeOrgID)
+				.append(" AND il.C_Tax_ID = ").append(ukSalesTaxID)
 				.append(" AND i.IsSOTrx = 'Y' AND i.DocStatus IN ('CO', 'CL')")
 				.append(" AND i.DateAcct >= ").append(DB.TO_DATE(from))
 				.append(" AND i.DateAcct <= ").append(DB.TO_DATE(to));
@@ -469,10 +483,12 @@ public class HmrcUtil {
 	/** the total value of purchases and all other inputs excluding any VAT : The total of purchase invoices from UK, rest of EC & rest of world – excluding VAT */
 	public static BigDecimal getBox7(Properties ctx, Timestamp from, Timestamp to, int instanceID, boolean isDetail, int totalAmtCurrencyID, IProcessUI iProcessUI, String trxName) {
 		
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
+				.append(" INNER JOIN C_InvoiceLine il ON (i.C_Invoice_ID = il.C_Invoice_ID)")
 				.append(" WHERE i.AD_Client_ID = ").append(Env.getAD_Client_ID(ctx))
 				.append(" AND i.AD_Org_ID = ").append(europeOrgID)
+				.append(" AND il.C_Tax_ID = ").append(ukTaxID)
 				.append(" AND i.IsSOTrx = 'N' AND i.DocStatus IN ('CO', 'CL')")
 				.append(" AND i.DateAcct >= ").append(DB.TO_DATE(from))
 				.append(" AND i.DateAcct <= ").append(DB.TO_DATE(to));
@@ -525,13 +541,13 @@ public class HmrcUtil {
 
 		boolean forceBoxes8And9ToZero = true; // hardcoded - faire sysconfig
 
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
 				.append(" INNER JOIN C_BPartner_Location bpl ON (i.C_BPartner_Location_ID = bpl.C_BPartner_Location_ID)")
 				.append(" INNER JOIN C_Location l ON (bpl.C_Location_ID = l.C_Location_ID)")
 				.append(" WHERE i.AD_Client_ID = ").append(Env.getAD_Client_ID(ctx))
 				.append(" AND i.AD_Org_ID = ").append(europeOrgID)
-				.append(" AND l.C_Country_ID IN (SELECT C_Country_ID FROM C_CountryGroupCountry WHERE C_CountryGroup_ID = ").append(ecCountryGroupID).append(")")
+				.append(" AND l.C_Country_ID = ").append(ukCountryID)
 				.append(" AND i.IsSOTrx = 'Y' AND i.DocStatus IN ('CO', 'CL')")
 				.append(" AND i.DateAcct >= ").append(DB.TO_DATE(from))
 				.append(" AND i.DateAcct <= ").append(DB.TO_DATE(to));
@@ -589,13 +605,13 @@ public class HmrcUtil {
 		
 		boolean forceBoxes8And9ToZero = true; // hardcoded - faire sysconfig
 
-		StringBuilder sql = new StringBuilder("SELECT i.C_Invoice_ID ")
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT(i.C_Invoice_ID) ")
 				.append(" FROM C_Invoice i")
 				.append(" INNER JOIN C_BPartner_Location bpl ON (i.C_BPartner_Location_ID = bpl.C_BPartner_Location_ID)")
 				.append(" INNER JOIN C_Location l ON (bpl.C_Location_ID = l.C_Location_ID)")
 				.append(" WHERE i.AD_Client_ID = ").append(Env.getAD_Client_ID(ctx))
 				.append(" AND i.AD_Org_ID = ").append(europeOrgID)
-				.append(" AND l.C_Country_ID IN (SELECT C_Country_ID FROM C_CountryGroupCountry WHERE C_CountryGroup_ID = ").append(ecCountryGroupID).append(")")
+				.append(" AND l.C_Country_ID = ").append(ukCountryID)
 				.append(" AND i.IsSOTrx = 'N' AND i.DocStatus IN ('CO', 'CL')")
 				.append(" AND i.DateAcct >= ").append(DB.TO_DATE(from))
 				.append(" AND i.DateAcct <= ").append(DB.TO_DATE(to));
@@ -672,4 +688,207 @@ public class HmrcUtil {
 		taf.setDateAcct(dateAcct);
 		taf.saveEx();
 	}
+	
+
+	public static String sendReturnData(String code, String periodKey, double vatDueSales, double vatDueAcquisitions,
+								  double totalVatDue, double vatReclaimedCurrPeriod, double netVatDue, 
+			                      double totalValueSalesExVAT, double totalValuePurchasesExVAT, 
+			                      double totalValueGoodsSuppliedExVAT, double totalAcquisitionsExVAT,
+			                      boolean finalised) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				                               new  ServiceConnector());
+		VATReturn vatReturn = new VATReturn(periodKey, vatDueSales, vatDueAcquisitions, totalVatDue, 
+				                            vatReclaimedCurrPeriod, netVatDue, totalValueSalesExVAT,
+				                            totalValuePurchasesExVAT, totalValueGoodsSuppliedExVAT,
+				                            totalAcquisitionsExVAT, finalised);
+		
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = doVATReturn(oauthservice, vatservice, code, vrn, vatReturn);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return retValue;
+	}
+
+	public static String getObligations(String code, String dateFrom, String dateTo, String status) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				new  ServiceConnector());
+
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = getVATObligations(oauthservice, vatservice, code, vrn, dateFrom, dateTo, status);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return retValue;
+	}
+	
+	public static String getVATObligations(OauthService oauthservice, VATService vatservice, String code, 
+			                               String vrn, String dateFrom, String dateTo, String status) 
+			                               throws IOException, UnauthorizedException {		
+
+		String jsonResponse;
+		Token token = oauthservice.getToken(code);
+		try {
+			
+			jsonResponse = vatservice.vatObligations(token.getAccessToken(), vrn, dateFrom, dateTo, status );
+		} catch (UnauthorizedException ue) {
+			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
+			jsonResponse = vatservice.vatObligations(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo, status);
+		}
+		
+		if (jsonResponse.contains("statusCode")) {
+			return jsonResponse;
+		}
+		else { // 200
+			System.out.println(jsonResponse.toString());
+
+			VATObligationResponse vatObligationResponse=VATParser.fromJsonObligations(jsonResponse);
+
+			VATObligation[] obligations = vatObligationResponse.getObligations();
+			StringBuilder msg = new StringBuilder("Obligations: \n");
+			for (VATObligation obligation : obligations) {
+				System.out.println(obligation.getStart());
+				System.out.println(obligation.getEnd());
+				System.out.println(obligation.getStatus());
+				msg.append("StartDate=").append(obligation.getStart()).append(" - ")
+				.append("EndDate=").append(obligation.getEnd()).append(" - ")
+				.append("Status=").append(obligation.getStatus()).append(" - ");
+				if (obligation.getStatus().compareTo("F") == 0) {
+					System.out.println(obligation.getReceived());
+					msg.append("Received=").append(obligation.getReceived()).append("\n");
+				}
+				if (obligation.getStatus().compareTo("O") == 0) {
+					System.out.println(obligation.getDue());
+					msg.append("Due=").append(obligation.getDue()).append("\n");
+				}
+				System.out.println(obligation.getPeriodKey());
+			}
+			
+
+			return msg.toString();
+		}
+	}
+	
+
+	public static String getLiabilities(String code, String dateFrom, String dateTo) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				new  ServiceConnector());
+
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = getVATLiabilities(oauthservice, vatservice, code, vrn, dateFrom, dateTo);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return retValue;
+	}
+
+	public static String getVATLiabilities(OauthService oauthservice, VATService vatservice, String code, 
+			String vrn, String dateFrom, String dateTo) 
+					throws IOException, UnauthorizedException {		
+
+		String jsonResponse;
+		Token token = oauthservice.getToken(code);
+		try {
+
+			jsonResponse = vatservice.vatLiabilities(token.getAccessToken(), vrn, dateFrom, dateTo);
+		} catch (UnauthorizedException ue) {
+			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
+			jsonResponse = vatservice.vatLiabilities(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo);
+		}
+
+		if (jsonResponse.contains("code") || jsonResponse.contains("statusCode")) {
+			return jsonResponse;
+		}
+		else { // 200
+			System.out.println(jsonResponse.toString());
+
+			VATLiabilitiesResponse vatLiabilitiesResponse=VATParser.fromJsonLiabilities(jsonResponse);
+
+			List<Liability> liabilities = vatLiabilitiesResponse.getLiabilities();
+			StringBuilder msg = new StringBuilder("Liabilities: \n");
+			for (Liability liability : liabilities) {
+				msg.append("- TaxPeriod from ").append(liability.getTaxPeriod().getFrom())
+				.append(" to ").append(liability.getTaxPeriod().getTo()).append(" - ")
+				.append("Type=").append(liability.getType()).append(" \n ")
+				.append("-- Original Amount=").append(liability.getOriginalAmount()).append(" - ")
+				.append("Outstanding Amount=").append(liability.getOutstandingAmount()).append(" - ")
+				.append("Due Date=").append(liability.getDue()).append(" \n ");
+			}
+
+			return msg.toString();
+		}
+	}
+
+	public static String getPayments(String code, String dateFrom, String dateTo) {
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				new  ServiceConnector());
+
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = getVATPayments(oauthservice, vatservice, code, vrn, dateFrom, dateTo);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return retValue;
+	}
+
+	public static String getVATPayments(OauthService oauthservice, VATService vatservice, String code, 
+			String vrn, String dateFrom, String dateTo) 
+					throws IOException, UnauthorizedException {		
+
+		String jsonResponse;
+		Token token = oauthservice.getToken(code);
+		try {
+
+			jsonResponse = vatservice.vatPayments(token.getAccessToken(), vrn, dateFrom, dateTo);
+		} catch (UnauthorizedException ue) {
+			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
+			jsonResponse = vatservice.vatPayments(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo);
+		}
+
+		if (jsonResponse.contains("code") || jsonResponse.contains("statusCode")) {
+			return jsonResponse;
+		}
+		else { // 200
+			System.out.println(jsonResponse.toString());
+
+			VATPaymentsResponse vatPaymentsResponse=VATParser.fromJsonPayments(jsonResponse);
+
+			List<Payment> payments = vatPaymentsResponse.getPayments();
+			StringBuilder msg = new StringBuilder("Payments: \n");
+			for (Payment payment : payments) {
+				msg.append("- Amount ").append(payment.getAmount());
+				if (payment.getReceived() != null) {
+					msg.append(" received ").append(payment.getReceived());
+				}
+				else {
+					msg.append(" without date ");
+				}
+				
+				msg.append(" \n ");
+			}
+
+			return msg.toString();
+		}
+	}
+
 }
