@@ -24,12 +24,18 @@ public class MTXXRReport extends X_T_XXR_Report {
 
 	/** Convert the amount in project currency at sysdate */
 	public static BigDecimal getConvertedAmt(Properties ctx, int clientID, BigDecimal amt, int currencyFromID, int currencyToID, Timestamp convDate) {
-		return MConversionRate.convert (ctx, amt, currencyFromID, currencyToID, convDate, 0, clientID, 0);
+		// FIXME: org is hardcoded, type is hardcoded
+		return MConversionRate.convert (ctx, amt, currencyFromID, currencyToID, convDate, 114, clientID, 1000000);
 	}
 
 	/** Get the rate for currencies at given date */
 	public static BigDecimal getRate(Properties ctx, int clientID, int currencyFromID, int currencyToID, Timestamp convDate) {
-		return MConversionRate.getRate(currencyFromID, currencyToID, convDate, 0, clientID, 0);
+		BigDecimal rate = MConversionRate.getRate(currencyFromID, currencyToID, convDate, 0, clientID, 0);
+		if (rate == null) {	
+			// FIXME: org is hardcoded, type is hardcoded
+			rate = MConversionRate.getRate(currencyFromID, currencyToID, convDate, 114, clientID, 1000000);
+		}
+		return rate;
 	}
 
 	/** Convert the amount in the desired currency using the rate (see MConversionRate.convert) */
