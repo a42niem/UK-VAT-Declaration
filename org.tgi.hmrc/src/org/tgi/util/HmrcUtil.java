@@ -699,9 +699,9 @@ public class HmrcUtil {
 		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
 				                               new  ServiceConnector());
 		VATReturn vatReturn = new VATReturn(periodKey, vatDueSales, vatDueAcquisitions, totalVatDue, 
-				                            vatReclaimedCurrPeriod, netVatDue, totalValueSalesExVAT,
-				                            totalValuePurchasesExVAT, totalValueGoodsSuppliedExVAT,
-				                            totalAcquisitionsExVAT, finalised);
+				                            vatReclaimedCurrPeriod, netVatDue, (int) totalValueSalesExVAT,
+				                            (int) totalValuePurchasesExVAT, (int) totalValueGoodsSuppliedExVAT,
+				                            (int) totalAcquisitionsExVAT, finalised);
 		
 		String retValue = "";
 		try {

@@ -48,26 +48,27 @@ public class VATReturn {
 	/**
 	 * double totalValueSalesExVAT : Total value of sales and all vatReturnResponse outputs excluding any VAT. This corresponds to box 6 on the VAT Return form. The value must be in pounds (no pence) between -9999999999999 and 9999999999999.
 	 */
-	private double totalValueSalesExVAT;
+	private int totalValueSalesExVAT;
 	/**
 	 * double totalValuePurchasesExVAT : Total value of purchases and all vatReturnResponse inputs excluding any VAT (including exempt purchases). This corresponds to box 7 on the VAT Return form. The value must be in pounds (no pence) between -9999999999999 and 9999999999999.
 	 */
-	private double totalValuePurchasesExVAT;
+	private int totalValuePurchasesExVAT;
 	/**
 	 * double totalValueGoodsSuppliedExVAT : Total value of all supplies of goods and related costs, excluding any VAT, to vatReturnResponse EC member states. This corresponds to box 8 on the VAT Return form. The value must be in pounds (no pence) between -9999999999999 and 9999999999999.
 	 */
-	private double totalValueGoodsSuppliedExVAT;
+	private int totalValueGoodsSuppliedExVAT;
 	/**
 	 * double totalAcquisitionsExVAT : Total value of acquisitions of goods and related costs excluding any VAT, from vatReturnResponse EC member states. This corresponds to box 9 on the VAT Return form. The value must be in pounds (no pence) between -9999999999999 and 9999999999999.
 	 */
-	private double totalAcquisitionsExVAT;
+	private int totalAcquisitionsExVAT;
 	/**
 	 * boolean finalised : Declaration that the user has finalised their VAT return.
 	 */
 	private boolean finalised;
 
-	public VATReturn(String periodKey,double vatDueSales,double vatDueAcquisitions,double totalVatDue,	double vatReclaimedCurrPeriod,double netVatDue,
-			double totalValueSalesExVAT,double totalValuePurchasesExVAT,double totalValueGoodsSuppliedExVAT,double totalAcquisitionsExVAT,boolean finalised) {
+	public VATReturn(String periodKey, double vatDueSales, double vatDueAcquisitions, double totalVatDue,
+			double vatReclaimedCurrPeriod,double netVatDue,	int totalValueSalesExVAT, int totalValuePurchasesExVAT, 
+			int totalValueGoodsSuppliedExVAT, int totalAcquisitionsExVAT, boolean finalised) {
 
 		this.periodKey=periodKey;
 		this.vatDueSales=vatDueSales;
@@ -131,35 +132,35 @@ public class VATReturn {
 		this.netVatDue = netVatDue;
 	}
 
-	public double getTotalValueSalesExVAT() {
+	public int getTotalValueSalesExVAT() {
 		return totalValueSalesExVAT;
 	}
 
-	public void setTotalValueSalesExVAT(double totalValueSalesExVAT) {
+	public void setTotalValueSalesExVAT(int totalValueSalesExVAT) {
 		this.totalValueSalesExVAT = totalValueSalesExVAT;
 	}
 
-	public double getTotalValuePurchasesExVAT() {
+	public int getTotalValuePurchasesExVAT() {
 		return totalValuePurchasesExVAT;
 	}
 
-	public void setTotalValuePurchasesExVAT(double totalValuePurchasesExVAT) {
+	public void setTotalValuePurchasesExVAT(int totalValuePurchasesExVAT) {
 		this.totalValuePurchasesExVAT = totalValuePurchasesExVAT;
 	}
 
-	public double getTotalValueGoodsSuppliedExVAT() {
+	public int getTotalValueGoodsSuppliedExVAT() {
 		return totalValueGoodsSuppliedExVAT;
 	}
 
-	public void setTotalValueGoodsSuppliedExVAT(double totalValueGoodsSuppliedExVAT) {
+	public void setTotalValueGoodsSuppliedExVAT(int totalValueGoodsSuppliedExVAT) {
 		this.totalValueGoodsSuppliedExVAT = totalValueGoodsSuppliedExVAT;
 	}
 
-	public double getTotalAcquisitionsExVAT() {
+	public int getTotalAcquisitionsExVAT() {
 		return totalAcquisitionsExVAT;
 	}
 
-	public void setTotalAcquisitionsExVAT(double totalAcquisitionsExVAT) {
+	public void setTotalAcquisitionsExVAT(int totalAcquisitionsExVAT) {
 		this.totalAcquisitionsExVAT = totalAcquisitionsExVAT;
 	}
 
@@ -171,67 +172,67 @@ public class VATReturn {
 		this.finalised = finalised;
 	}
 	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (finalised ? 1231 : 1237);
-		long temp;
-		temp = Double.doubleToLongBits(netVatDue);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((periodKey == null) ? 0 : periodKey.hashCode());
-		temp = Double.doubleToLongBits(totalAcquisitionsExVAT);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(totalValueGoodsSuppliedExVAT);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(totalValuePurchasesExVAT);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(totalValueSalesExVAT);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(totalVatDue);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(vatDueAcquisitions);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(vatDueSales);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(vatReclaimedCurrPeriod);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		return result;
-	}
+//	@Override
+//	public int hashCode() {
+//		final int prime = 31;
+//		int result = 1;
+//		result = prime * result + (finalised ? 1231 : 1237);
+//		long temp;
+//		temp = Double.doubleToLongBits(netVatDue);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		result = prime * result + ((periodKey == null) ? 0 : periodKey.hashCode());
+//		temp = Double.doubleToLongBits(totalAcquisitionsExVAT);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		temp = Double.doubleToLongBits(totalValueGoodsSuppliedExVAT);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		temp = Double.doubleToLongBits(totalValuePurchasesExVAT);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		temp = Double.doubleToLongBits(totalValueSalesExVAT);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		temp = Double.doubleToLongBits(totalVatDue);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		temp = Double.doubleToLongBits(vatDueAcquisitions);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		temp = Double.doubleToLongBits(vatDueSales);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		temp = Double.doubleToLongBits(vatReclaimedCurrPeriod);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		return result;
+//	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        VATReturn vatReturn = (VATReturn) o;
-		if (finalised != vatReturn.finalised)
-			return false;
-		if (Double.doubleToLongBits(netVatDue) != Double.doubleToLongBits(vatReturn.netVatDue))
-			return false;
-		if (periodKey == null) {
-			if (vatReturn.periodKey != null)
-				return false;
-		} else if (!periodKey.equals(vatReturn.periodKey))
-			return false;
-		if (Double.doubleToLongBits(totalAcquisitionsExVAT) != Double.doubleToLongBits(vatReturn.totalAcquisitionsExVAT))
-			return false;
-		if (Double.doubleToLongBits(totalValueGoodsSuppliedExVAT) != Double
-				.doubleToLongBits(vatReturn.totalValueGoodsSuppliedExVAT))
-			return false;
-		if (Double.doubleToLongBits(totalValuePurchasesExVAT) != Double
-				.doubleToLongBits(vatReturn.totalValuePurchasesExVAT))
-			return false;
-		if (Double.doubleToLongBits(totalValueSalesExVAT) != Double.doubleToLongBits(vatReturn.totalValueSalesExVAT))
-			return false;
-		if (Double.doubleToLongBits(totalVatDue) != Double.doubleToLongBits(vatReturn.totalVatDue))
-			return false;
-		if (Double.doubleToLongBits(vatDueAcquisitions) != Double.doubleToLongBits(vatReturn.vatDueAcquisitions))
-			return false;
-		if (Double.doubleToLongBits(vatDueSales) != Double.doubleToLongBits(vatReturn.vatDueSales))
-			return false;
-		if (Double.doubleToLongBits(vatReclaimedCurrPeriod) != Double.doubleToLongBits(vatReturn.vatReclaimedCurrPeriod))
-			return false;
-		return true;
-	}
+//	@Override
+//	public boolean equals(Object o) {
+//		if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//
+//        VATReturn vatReturn = (VATReturn) o;
+//		if (finalised != vatReturn.finalised)
+//			return false;
+//		if (Double.doubleToLongBits(netVatDue) != Double.doubleToLongBits(vatReturn.netVatDue))
+//			return false;
+//		if (periodKey == null) {
+//			if (vatReturn.periodKey != null)
+//				return false;
+//		} else if (!periodKey.equals(vatReturn.periodKey))
+//			return false;
+//		if (Double.doubleToLongBits(totalAcquisitionsExVAT) != Double.doubleToLongBits(vatReturn.totalAcquisitionsExVAT))
+//			return false;
+//		if (Double.doubleToLongBits(totalValueGoodsSuppliedExVAT) != Double
+//				.doubleToLongBits(vatReturn.totalValueGoodsSuppliedExVAT))
+//			return false;
+//		if (Double.doubleToLongBits(totalValuePurchasesExVAT) != Double
+//				.doubleToLongBits(vatReturn.totalValuePurchasesExVAT))
+//			return false;
+//		if (Double.doubleToLongBits(totalValueSalesExVAT) != Double.doubleToLongBits(vatReturn.totalValueSalesExVAT))
+//			return false;
+//		if (Double.doubleToLongBits(totalVatDue) != Double.doubleToLongBits(vatReturn.totalVatDue))
+//			return false;
+//		if (Double.doubleToLongBits(vatDueAcquisitions) != Double.doubleToLongBits(vatReturn.vatDueAcquisitions))
+//			return false;
+//		if (Double.doubleToLongBits(vatDueSales) != Double.doubleToLongBits(vatReturn.vatDueSales))
+//			return false;
+//		if (Double.doubleToLongBits(vatReclaimedCurrPeriod) != Double.doubleToLongBits(vatReturn.vatReclaimedCurrPeriod))
+//			return false;
+//		return true;
+//	}
 }
