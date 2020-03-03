@@ -54,14 +54,15 @@ public class ServiceConnector {
     public String post(String url, String acceptHeader, Optional<String> bearerToken,Optional<String> json) throws UnauthorizedException {
         HttpPost request = new HttpPost(url);
         request.addHeader("Accept", acceptHeader);
-        if (bearerToken.isPresent()) {
-            request.addHeader("Authorization", "Bearer " + bearerToken.get());
-        }
         if (json.isPresent()) {
         	StringEntity requestEntity = new StringEntity(
         		    json.get(),
         		    ContentType.APPLICATION_JSON);
         	request.setEntity(requestEntity);
+            request.addHeader("Content-Type", "application/json");
+        }
+        if (bearerToken.isPresent()) {
+            request.addHeader("Authorization", "Bearer " + bearerToken.get());
         }
 
         try {
