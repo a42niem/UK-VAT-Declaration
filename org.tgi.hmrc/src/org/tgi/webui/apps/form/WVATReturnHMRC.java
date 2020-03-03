@@ -29,11 +29,14 @@ import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
+import org.compiere.process.ProcessInfo;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.tgi.model.MXXRTaxDeclaration;
+import org.tgi.model.MXXRTaxDeclarationLine;
 import org.tgi.util.HmrcUtil;
 import org.tgi.webui.util.CommonServerPushCallbackOpenUrl;
 import org.zkoss.zk.ui.Desktop;
@@ -56,17 +59,15 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 
 	private static final long serialVersionUID = -8528918348159236707L;
 
-	private final static String scope="write:vat";
+	private final static String scopeWrite="write:vat";
+	private final static String scopeRead="read:vat";
 	
 	// FIXME: change before next testing of same period, set back to "A" for production! 
 	private static final String periodDelimiter = "D";
 	
-	private Button btnAuthorize, btnSend, btnSelect, btnLegal;
-	private Label labelLegal = new Label();
+	private Button btnAuthorizeObligation, btnGetPeriodKey, btnAuthorizeReturn, btnSendReturn;
 	private Label labelDateAcct = new Label();
 	private Label labelDateAcct2 = new Label();
-	private Label labelPeriodKey = new Label();
-	private Label labelRate = new Label();
 	private Label labelvatDueSales = new Label(); // : 105.5,
 	private Label labelvatDueAcquisitions = new Label(); // : -100.45,
 	private Label labeltotalVatDue = new Label(); // : 5.05,
@@ -82,7 +83,8 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 	Textbox tbRate = new Textbox();
 	Textbox tbResult = new Textbox();
 	Textbox tbPeriodKey = new Textbox();
-	Textbox tbUrlWithCode = new Textbox();
+	Textbox tbUrlWithCodeObligation = new Textbox();
+	Textbox tbUrlWithCodeReturn = new Textbox();
 	  //"periodKey" : "18Q1",
 	Textbox tbvatDueSales = new Textbox(); // : 105.5,
 	Textbox tbvatDueAcquisitions = new Textbox(); // : -100.45,
@@ -95,11 +97,61 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 	Textbox tbtotalAcquisitionsExVAT = new Textbox(); // : 3000.0,
 	  //"finalised" : true
 	private boolean finalised = false;
+	private Integer XXRTaxDeclarationID = 0;
+	private MXXRTaxDeclaration mtd = null;
+	private Properties ctx = Env.getCtx();
+	private MXXRTaxDeclarationLine line1 = null;
+	private MXXRTaxDeclarationLine line2 = null;
+	private MXXRTaxDeclarationLine line3 = null;
+	private MXXRTaxDeclarationLine line4 = null;
+	private MXXRTaxDeclarationLine line5 = null;
+	private MXXRTaxDeclarationLine line6 = null;
+	private MXXRTaxDeclarationLine line7 = null;
+	private MXXRTaxDeclarationLine line8 = null;
+	private MXXRTaxDeclarationLine line9 = null;
+	private String periodKey = null;
 	
 	protected void initForm() {
 		try {
+			XXRTaxDeclarationID = (Integer) this.getGridTab().getValue("XXR_TaxDeclaration_ID");
+			mtd = new MXXRTaxDeclaration(ctx, XXRTaxDeclarationID, null);
+			line1 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_VATDueInThePeriodOnSalesAndOtherOutputs)
+					.first();
+			line2 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_VATDueInPeriodOnAcquisitionsFromOtherMemberOfEU)
+					.first();
+			line3 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_TotalVATDue)
+					.first();
+			line4 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_VATReclaimedInThePeriodOnPurchasesAndOtherInputs)
+					.first();
+			line5 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_NetVATToPayToHMRCOrReclaim)
+					.first();
+			line6 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_TotalValueOfSalesAndAllOtherOutputsExcludingAnyVAT)
+					.first();
+			line7 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_TotalValueOfPurchasesAndAllOtherInputsExcludingVAT)
+					.first();
+			line8 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_TotalValueSuppliesGoodsAndRelatedCosts_NoVAT_EU)
+					.first();
+			line9 = new Query (ctx, MXXRTaxDeclarationLine.Table_Name, "XXR_TaxDeclaration_ID = ? AND type=?", null)
+					.setParameters(mtd.getXXR_TaxDeclaration_ID(), 
+							MXXRTaxDeclarationLine.TYPE_TotalValueAcquisitionsGoodsAndRelatedCosts_NoVAT_EU)
+					.first();
 			init();
-
 		}
 		catch (Exception e) {
 			logger.severe("Error when opening Test HMRC form : " + e);
@@ -123,28 +175,23 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 
 		labelDateAcct.setText(Msg.translate(Env.getCtx(), "DateAcct"));
 		labelDateAcct2.setText("-");
-		labelRate.setText(Msg.translate(Env.getCtx(), "Rate"));
-		btnSelect = new Button("1. Select data ");
-		btnSelect.addEventListener(Events.ON_CLICK, this);
+//		labelRate.setText(Msg.translate(Env.getCtx(), "Rate"));
+//		btnSelect = new Button("1. Select data ");
+//		btnSelect.addEventListener(Events.ON_CLICK, this);
 
 		Hlayout hl0 = new Hlayout();
 		hl0.setValign("middle");
 		hl0.appendChild(labelDateAcct);
 		hl0.appendChild(fieldDateAcct.getComponent());
+		fieldDateAcct.setValue(mtd.getDateFrom());
+		fieldDateAcct.setReadWrite(false);
 		hl0.appendChild(labelDateAcct2);
 		hl0.appendChild(fieldDateAcct2.getComponent());
-		hl0.appendChild(btnSelect);
+		fieldDateAcct2.setValue(mtd.getDateTo());
+		fieldDateAcct2.setReadWrite(false);
 
 		Vlayout vl = new Vlayout();
 		vl.appendChild(hl0);
-		Hlayout hlr = new Hlayout();
-		hlr.appendChild(labelRate);
-		hlr.appendChild(tbRate);
-		vl.appendChild(hlr);
-		// PeriodKey
-		// The ID code for the period that this obligation belongs to. 
-		// The format is a string of four alphanumeric characters. 
-		// Occasionally the format includes the # symbol
 //		Hlayout hlper = new Hlayout();
 //		labelPeriodKey.setText(Msg.translate(Env.getCtx(), "PeriodKey"));
 //		hlper.appendChild(labelPeriodKey);
@@ -158,6 +205,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labelvatDueSales.setText(Msg.translate(Env.getCtx(), "1 vatDueSales"));
 		hlvds.appendChild(labelvatDueSales);
 		hlvds.appendChild(tbvatDueSales);
+		tbvatDueSales.setValue(line1.getXXR_SentAmount().toString());
 		vl.appendChild(hlvds);
 		// vatDueAcquisitions
 		// VAT due on acquisitions from other EC Member States. 
@@ -167,6 +215,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labelvatDueAcquisitions.setText(Msg.translate(Env.getCtx(), "2 vatDueAcquisitions"));
 		hlvda.appendChild(labelvatDueAcquisitions);
 		hlvda.appendChild(tbvatDueAcquisitions);
+		tbvatDueAcquisitions.setValue(line2.getXXR_SentAmount().toString());
 		vl.appendChild(hlvda);
 		// totalVatDue
 		// Total VAT due (the sum of vatDueSales and vatDueAcquisitions).
@@ -176,6 +225,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labeltotalVatDue.setText(Msg.translate(Env.getCtx(), "3 totalVatDue"));
 		hltvd.appendChild(labeltotalVatDue);
 		hltvd.appendChild(tbtotalVatDue);
+		tbtotalVatDue.setValue(line3.getXXR_SentAmount().toString());
 		vl.appendChild(hltvd);
 		// vatReclaimedCurrPeriod
 		// VAT reclaimed on purchases and other inputs (including acquisitions from the EC). 
@@ -185,6 +235,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labelvatReclaimedCurrPeriod.setText(Msg.translate(Env.getCtx(), "4 vatReclaimedCurrPeriod"));
 		hlvrcp.appendChild(labelvatReclaimedCurrPeriod);
 		hlvrcp.appendChild(tbvatReclaimedCurrPeriod);
+		tbvatReclaimedCurrPeriod.setValue(line4.getXXR_SentAmount().toString());
 		vl.appendChild(hlvrcp);
 		// netVatDue
 		// The difference between totalVatDue and vatReclaimedCurrPeriod. 
@@ -194,6 +245,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labelnetVatDue.setText(Msg.translate(Env.getCtx(), "5 netVatDue"));
 		hlnvd.appendChild(labelnetVatDue);
 		hlnvd.appendChild(tbnetVatDue);
+		tbnetVatDue.setValue(line5.getXXR_SentAmount().toString());
 		vl.appendChild(hlnvd);
 		// totalValueSalesExVAT
 		// Total value of sales and all other outputs excluding any VAT. 
@@ -203,6 +255,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labeltotalValueSalesExVAT.setText(Msg.translate(Env.getCtx(), "6 totalValueSalesExVAT"));
 		hltvsev.appendChild(labeltotalValueSalesExVAT);
 		hltvsev.appendChild(tbtotalValueSalesExVAT);
+		tbtotalValueSalesExVAT.setValue(line6.getXXR_SentAmount().toString());
 		vl.appendChild(hltvsev);
 		// totalValuePurchasesExVAT
 		// Total value of purchases and all other inputs excluding any VAT (including exempt purchases). 
@@ -212,6 +265,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labeltotalValuePurchasesExVAT.setText(Msg.translate(Env.getCtx(), "7 totalValuePurchasesExVAT"));
 		hltvpev.appendChild(labeltotalValuePurchasesExVAT);
 		hltvpev.appendChild(tbtotalValuePurchasesExVAT);
+		tbtotalValuePurchasesExVAT.setValue(line7.getXXR_SentAmount().toString());
 		vl.appendChild(hltvpev);
 		// totalValueGoodsSuppliedExVAT
 		// Total value of all supplies of goods and related costs, excluding any VAT, to other EC member states. 
@@ -221,6 +275,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labeltotalValueGoodsSuppliedExVAT.setText(Msg.translate(Env.getCtx(), "8 totalValueGoodsSuppliedExVAT"));
 		hltvgsev.appendChild(labeltotalValueGoodsSuppliedExVAT);
 		hltvgsev.appendChild(tbtotalValueGoodsSuppliedExVAT);
+		tbtotalValueGoodsSuppliedExVAT.setValue(line8.getXXR_SentAmount().toString());
 		vl.appendChild(hltvgsev);
 		// totalAcquisitionsExVAT
 		// Total value of acquisitions of goods and related costs excluding any VAT, from other EC member states. 
@@ -230,44 +285,44 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		labeltotalAcquisitionsExVAT.setText(Msg.translate(Env.getCtx(), "9 totalAcquisitionsExVAT"));
 		hltaev.appendChild(labeltotalAcquisitionsExVAT);
 		hltaev.appendChild(tbtotalAcquisitionsExVAT);
+		tbtotalAcquisitionsExVAT.setValue(line9.getXXR_SentAmount().toString());
 		vl.appendChild(hltaev);
 		
-		btnAuthorize = new Button("2. Request an OAuth 2.0 authorisation code with the required scope");
-		btnAuthorize.addEventListener(Events.ON_CLICK, this);
-		tbCredentials.setValue(username + " / " + userpwd);
-		tbCredentials.setReadonly(true);
+		btnAuthorizeObligation = new Button("1. Request an OAuth 2.0 authorisation code with the required scope");
+		btnAuthorizeObligation.addEventListener(Events.ON_CLICK, this);
+		vl.appendChild(btnAuthorizeObligation);
 
-		Hlayout hl = new Hlayout();
-		hl.setValign("middle");
-		hl.appendChild(btnAuthorize);
-		hl.appendChild(tbCredentials);
-		vl.appendChild(hl);
+		vl.appendChild(tbUrlWithCodeObligation);
 
-		labelLegal.setText(Msg.translate(Env.getCtx(), "When you submit this VAT information you are making a legal\r\n" + 
-				"declaration that the information is true and complete. A false declaration\r\n" + 
-				"can result in prosecution."));
-		btnLegal = new Button("3. Accept legal ");
-		btnLegal.addEventListener(Events.ON_CLICK, this);
+		btnGetPeriodKey = new Button("2. Exchange the OAuth 2.0 authorisation code for an access token and send data");
+		btnGetPeriodKey.addEventListener(Events.ON_CLICK, this);
 
-		btnSend = new Button("4. Exchange the OAuth 2.0 authorisation code for an access token and send data");
-		btnSend.addEventListener(Events.ON_CLICK, this);
+		vl.appendChild(btnGetPeriodKey);
 
-		vl.appendChild(tbUrlWithCode);
-		vl.appendChild(labelLegal);
-		vl.appendChild(btnLegal);
-		vl.appendChild(btnSend);
+		btnAuthorizeReturn = new Button("3. Request an OAuth 2.0 authorisation code with the required scope");
+		btnAuthorizeReturn.addEventListener(Events.ON_CLICK, this);
+
+		vl.appendChild(btnAuthorizeReturn);
+		vl.appendChild(tbUrlWithCodeReturn);
+
+		btnSendReturn = new Button("4. Exchange the OAuth 2.0 authorisation code for an access token and send data");
+		btnSendReturn.addEventListener(Events.ON_CLICK, this);
+
+		vl.appendChild(btnSendReturn);
+
+
 		vl.appendChild(tbResult);
 
 		center.appendChild(vl);
 
 		tbResult.setRows(10);
 		tbResult.setHflex("true");
-		tbUrlWithCode.setPlaceholder("Paste URL starting with idempiere.alfredkochen.de and containing ?code=");
-		tbUrlWithCode.setHflex("true");
-		tbPeriodKey.setPlaceholder("Period Key (eg: 'A001'");
+		tbUrlWithCodeObligation.setPlaceholder("Paste URL starting with idempiere.alfredkochen.de and containing ?code=");
+		tbUrlWithCodeObligation.setHflex("true");
+		tbUrlWithCodeReturn.setPlaceholder("Paste URL starting with idempiere.alfredkochen.de and containing ?code=");
+		tbUrlWithCodeReturn.setHflex("true");
 
-		tbUrlWithCode.setEnabled(false);
-		//tbPeriodKey.setEnabled(false);
+		tbUrlWithCodeObligation.setEnabled(false);
 		tbRate.setEnabled(false);
 		tbvatDueSales.setEnabled(false);
 		tbvatDueAcquisitions.setEnabled(false);
@@ -278,69 +333,17 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 		tbtotalValuePurchasesExVAT.setEnabled(false);
 		tbtotalValueGoodsSuppliedExVAT.setEnabled(false);
 		tbtotalAcquisitionsExVAT.setEnabled(false);
-		btnAuthorize.setEnabled(false);
-		btnSend.setEnabled(false);
-		btnLegal.setEnabled(false);
+		btnAuthorizeObligation.setEnabled(true);
+		btnAuthorizeReturn.setEnabled(false);
+		btnSendReturn.setEnabled(false);
 	}
 
 	public void onEvent(Event event) throws Exception {
 
 		Properties ctx = Env.getCtx();		
 		
-		if (event.getTarget() == btnSelect) {
-
-			if(fieldDateAcct.getValue()==null)
-				throw new WrongValueException(fieldDateAcct.getComponent(), "StartDate must be set !");
-			if(fieldDateAcct2.getValue()==null)
-				throw new WrongValueException(fieldDateAcct2.getComponent(), "EndDate must be set !");
-			// FIXME: avoid fix EUR to GBP rate, enable others 
-			BigDecimal rate = MConversionRate.getRate (102, 114, (Timestamp) fieldDateAcct2.getValue(), 
-					 								   114, Env.getAD_Client_ID(ctx), 
-					 								   Env.getAD_Org_ID(ctx));
-			rate = rate.setScale(4, RoundingMode.HALF_UP);
-			tbRate.setValue(rate.toString());
-            String trxname = Trx.createTrxName();
-			Query query = new Query(ctx, "RV_C_InvoiceTax", 
-					"RV_C_InvoiceTax.AD_Org_ID=? AND TRUNC(RV_C_InvoiceTax.DateInvoiced) BETWEEN trunc(cast(? as date)) AND trunc(cast(? as date)) AND RV_C_InvoiceTax.C_Tax_ID=?", trxname);
-			//  UK Sales Tax 1000022
-			query.setParameters(Env.getAD_Org_ID(ctx),fieldDateAcct.getValue(),fieldDateAcct2.getValue(),1000022);
-			BigDecimal uksalesbase = query.aggregate("TaxBaseAmt", Query.AGGREGATE_SUM);
-			BigDecimal uksalestax = query.aggregate("TaxAmt", Query.AGGREGATE_SUM);
-			BigDecimal uksalesbasegbp = uksalesbase.multiply(rate);
-			BigDecimal uksalestaxgbp = uksalestax.multiply(rate);
-			tbvatDueSales.setValue(uksalestaxgbp.setScale(2, RoundingMode.HALF_UP).toString()); // 1
-			tbvatDueAcquisitions.setValue("0"); // 2
-			tbtotalVatDue.setValue(uksalestaxgbp.setScale(2, RoundingMode.HALF_UP).toString()); // 3
-			//  UK Tax 1000021
-			query.setParameters(Env.getAD_Org_ID(ctx),fieldDateAcct.getValue(),fieldDateAcct2.getValue(),1000021);
-			BigDecimal ukbase = query.aggregate("TaxBaseAmt", Query.AGGREGATE_SUM);
-			BigDecimal uktax = query.aggregate("TaxAmt", Query.AGGREGATE_SUM);
-			BigDecimal ukbasegbp = ukbase.multiply(rate);
-			BigDecimal uktaxgbp = uktax.multiply(rate);
-			tbvatReclaimedCurrPeriod.setValue(uktaxgbp.setScale(2, RoundingMode.HALF_UP).toString()); // 4
-			tbnetVatDue.setValue(uksalestaxgbp.subtract(uktaxgbp).setScale(2, RoundingMode.HALF_UP).toString()); // 5
-			tbtotalValueSalesExVAT.setValue(uksalesbasegbp.setScale(0, RoundingMode.DOWN).toString()); // 6
-			tbtotalValuePurchasesExVAT.setValue(ukbasegbp.setScale(0, RoundingMode.DOWN).toString()); // 7
-			tbtotalValueGoodsSuppliedExVAT.setValue("0"); // 8
-			tbtotalAcquisitionsExVAT.setValue("0"); // 9
-			btnAuthorize.setEnabled(true);
-			btnSend.setEnabled(false);
-			btnLegal.setEnabled(false);
-						
-
-//			StringBuilder sql = new StringBuilder("SELECT abs(fa.amtacctdr-fa.amtacctcr), (fa.amtacctdr-fa.amtacctcr),") // 1-2
-//					PreparedStatement pstmt = null;
-//			ResultSet rs = null;
-//			try
-//			{
-//				pstmt = DB.prepareStatement(sql.toString(), null);
-//				int i = 1;
-//				pstmt.setInt(i++, m_AD_Client_ID);
-//				
-
-		}		
-		else if (event.getTarget() == btnAuthorize) {
-			String url = HmrcUtil.getAuthorizationRequestUrl(scope);
+		if (event.getTarget() == btnAuthorizeObligation) {
+			String url = HmrcUtil.getAuthorizationRequestUrl(scopeRead);
 
 			Desktop desktop = AEnv.getDesktop();
 			ServerPushTemplate pushUpdateUi = new ServerPushTemplate (desktop);
@@ -349,45 +352,97 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 			callback.setOpenInNewTab(true);
 			pushUpdateUi.executeAsync (callback);
 
-			tbUrlWithCode.setEnabled(true);
-			//tbPeriodKey.setEnabled(true);
-			btnLegal.setEnabled(true);
-			btnSend.setEnabled(false);
+			tbUrlWithCodeObligation.setEnabled(true);
+			btnGetPeriodKey.setEnabled(true);
 
 		}
-		else if (event.getTarget() == btnLegal) {
-			String msg = "Thank you for accepting the legal declaration";
-			FDialog.info(getWindowNo(), this, "", msg);
-			btnLegal.setEnabled(false);
-			btnSelect.setEnabled(false);
-			btnAuthorize.setEnabled(false);
-			btnSend.setEnabled(true);
-			finalised = true;
+		else if (event.getTarget() == btnGetPeriodKey) {
 
-		}
-		else if (event.getTarget() == btnSend) {
+			String year = null;
+			int month = 0;
+			int day = 0;
+			String fromDate = null;
+			if (fieldDateAcct.getValue() != null) {
+				Calendar fromCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct.getValue());
+				year = String.valueOf(fromCal.get(Calendar.YEAR));
+				month = fromCal.get(Calendar.MONTH);
+				day = fromCal.get(Calendar.DAY_OF_MONTH);
+				fromDate = year + "-" 
+				           + ((month < 10) ? "0" : "") + String.valueOf(month+1) + "-"
+				           + ((day < 10) ? "0" : "") + String.valueOf(day);
+			}
+			
+			String toDate = null;
+			if (fieldDateAcct2.getValue() != null) {
+				Calendar toCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct2.getValue());
+				year = String.valueOf(toCal.get(Calendar.YEAR));
+				month = toCal.get(Calendar.MONTH);
+				day = toCal.get(Calendar.DAY_OF_MONTH);
+				toDate = year + "-" 
+				           + ((month < 10) ? "0" : "") + String.valueOf(month+1) + "-"
+				           + ((day < 10) ? "0" : "") + String.valueOf(day);
+			}
 
-			//String periodKey = tbPeriodKey.getValue();
-			Calendar periodCal = TimeUtil.getCalendar((Timestamp) fieldDateAcct.getValue());
-			LocalDate dateAcctLocal = ((Timestamp) fieldDateAcct.getValue()).toLocalDateTime().toLocalDate();
-			//String periodKey = String.valueOf(periodCal.get(Calendar.YEAR)) + "B" + String.valueOf((periodCal.get(Calendar.MONTH) / 3) + 1);
-			String periodKey = String.valueOf(periodCal.get(Calendar.YEAR) - 2000) + periodDelimiter + String.valueOf(dateAcctLocal.get(IsoFields.QUARTER_OF_YEAR));
-			if (Util.isEmpty(periodKey))
-				throw new WrongValueException(tbPeriodKey, "Period key must be set !");
+			if (Util.isEmpty(tbUrlWithCodeObligation.getValue()))
+				throw new WrongValueException(tbUrlWithCodeObligation, "You did not past the URL !");
 
-			if (Util.isEmpty(tbUrlWithCode.getValue()))
-				throw new WrongValueException(tbUrlWithCode, "You did not past the URL !");
-
-			String url = tbUrlWithCode.getValue();
+			String url = tbUrlWithCodeObligation.getValue();
 
 			int pos = url.indexOf("?code=");
 			if (pos <= 0)
-				throw new WrongValueException(tbUrlWithCode, "URL doesn't contain code !");
+				throw new WrongValueException(tbUrlWithCodeObligation, "URL doesn't contain code !");
 
 			String code = url.substring(pos + 6);
 			System.out.println("url  = " + url);
 			System.out.println("code = " + code);
 
+			// PeriodKey
+			// The ID code for the period that this obligation belongs to. 
+			// The format is a string of four alphanumeric characters. 
+			// Occasionally the format includes the # symbol
+			periodKey = HmrcUtil.getPeriodKey(code,
+					 fromDate, 
+					 toDate
+			   		);
+			mtd.setXXR_PeriodKey(periodKey);
+			mtd.save();
+			
+			btnAuthorizeReturn.setEnabled(true);
+			
+		}
+		if (event.getTarget() == btnAuthorizeReturn) {
+			String url = HmrcUtil.getAuthorizationRequestUrl(scopeWrite);
+
+			Desktop desktop = AEnv.getDesktop();
+			ServerPushTemplate pushUpdateUi = new ServerPushTemplate (desktop);
+			CommonServerPushCallbackOpenUrl callback = new CommonServerPushCallbackOpenUrl();
+			callback.setUrl(url);
+			callback.setOpenInNewTab(true);
+			pushUpdateUi.executeAsync (callback);
+
+			tbUrlWithCodeReturn.setEnabled(true);
+			btnSendReturn.setEnabled(true);
+
+		}
+		else if (event.getTarget() == btnSendReturn) {
+
+			if (Util.isEmpty(tbUrlWithCodeReturn.getValue()))
+				throw new WrongValueException(tbUrlWithCodeReturn, "You did not past the URL !");
+
+			String url = tbUrlWithCodeReturn.getValue();
+
+			int pos = url.indexOf("?code=");
+			if (pos <= 0)
+				throw new WrongValueException(tbUrlWithCodeReturn, "URL doesn't contain code !");
+
+			String code = url.substring(pos + 6);
+			System.out.println("url  = " + url);
+			System.out.println("code = " + code);
+			
+			finalised = mtd.isXXR_IsFinalised();
+			if (!finalised)
+				throw new WrongValueException(tbUrlWithCodeObligation, "You did not finalise! Go back to declaration");
+			
 			String msg = HmrcUtil.sendReturnData(code, 
 										   periodKey, 
 										   Double.parseDouble(tbvatDueSales.getValue()),
@@ -405,11 +460,15 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 
 			if (msg.startsWith("Error")) {
 				FDialog.error(getWindowNo(), "Error", msg);
-				btnAuthorize.setEnabled(true);
+				btnAuthorizeReturn.setEnabled(true);
 			}
 			else
 				FDialog.info(getWindowNo(), this, "", msg);
-
+				mtd.setXXR_VatReturnResponse(msg);
+				mtd.setXXR_DataSentOn(new Timestamp(System.currentTimeMillis()));
+				mtd.setXXR_DataSentByUser_ID(Env.getAD_User_ID(ctx));
+				mtd.setProcessed(true);
+				mtd.saveEx();
 		}
 
 	}
