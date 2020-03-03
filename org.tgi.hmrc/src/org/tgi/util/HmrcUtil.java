@@ -732,6 +732,24 @@ public class HmrcUtil {
 		return retValue;
 	}
 	
+	public static String getPeriodKey(String code, String dateFrom, String dateTo) {
+		String status = "O"; // we want the open obligation info
+		OauthService oauthservice = HmrcUtil.getOauthService();
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,
+				new  ServiceConnector());
+
+		String retValue = "";
+		try {
+			System.out.println(oauthservice.toString());
+			retValue = getVATObligationPeriodKey(oauthservice, vatservice, code, vrn, dateFrom, dateTo, status);
+		} catch (IOException | UnauthorizedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return retValue;
+	}
+	
 	public static String getVATObligations(OauthService oauthservice, VATService vatservice, String code, 
 			                               String vrn, String dateFrom, String dateTo, String status) 
 			                               throws IOException, UnauthorizedException {		
@@ -779,6 +797,47 @@ public class HmrcUtil {
 		}
 	}
 	
+	public static String getVATObligationPeriodKey(OauthService oauthservice, VATService vatservice, String code, 
+			String vrn, String dateFrom, String dateTo, String status) 
+					throws IOException, UnauthorizedException {		
+
+		String jsonResponse;
+		Token token = oauthservice.getToken(code);
+		try {
+
+			jsonResponse = vatservice.vatObligations(token.getAccessToken(), vrn, dateFrom, dateTo, status );
+		} catch (UnauthorizedException ue) {
+			Token refreshedToken = oauthservice.refreshToken(token.getRefreshToken());
+			jsonResponse = vatservice.vatObligations(refreshedToken.getAccessToken(), vrn, dateFrom, dateTo, status);
+		}
+
+		if (jsonResponse.contains("ode")) {
+			return jsonResponse;
+		}
+		else { // 200
+			System.out.println(jsonResponse.toString());
+
+			VATObligationResponse vatObligationResponse=VATParser.fromJsonObligations(jsonResponse);
+
+			VATObligation[] obligations = vatObligationResponse.getObligations();
+			StringBuilder msg = new StringBuilder("");
+			for (VATObligation obligation : obligations) {
+				System.out.println(obligation.getStart());
+				System.out.println(obligation.getEnd());
+				System.out.println(obligation.getStatus());
+				if (obligation.getStatus().compareTo("O") == 0) {
+					System.out.println(obligation.getDue());
+					System.out.println(obligation.getPeriodKey());
+					msg.append(obligation.getPeriodKey());
+				}
+				else {
+					// FIXME: throw 
+				}
+			}
+
+			return msg.toString();
+		}
+	}
 
 	public static String getLiabilities(String code, String dateFrom, String dateTo) {
 		OauthService oauthservice = HmrcUtil.getOauthService();
