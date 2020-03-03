@@ -368,7 +368,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 				month = fromCal.get(Calendar.MONTH);
 				day = fromCal.get(Calendar.DAY_OF_MONTH);
 				fromDate = year + "-" 
-				           + ((month < 10) ? "0" : "") + String.valueOf(month+1) + "-"
+				           + ((month+1 < 10) ? "0" : "") + String.valueOf(month+1) + "-"
 				           + ((day < 10) ? "0" : "") + String.valueOf(day);
 			}
 			
@@ -379,7 +379,7 @@ public class WVATReturnHMRC extends ADForm implements EventListener<Event> {
 				month = toCal.get(Calendar.MONTH);
 				day = toCal.get(Calendar.DAY_OF_MONTH);
 				toDate = year + "-" 
-				           + ((month < 10) ? "0" : "") + String.valueOf(month+1) + "-"
+				           + ((month+1 < 10) ? "0" : "") + String.valueOf(month+1) + "-"
 				           + ((day < 10) ? "0" : "") + String.valueOf(day);
 			}
 
