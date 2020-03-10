@@ -15,12 +15,11 @@
  * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
 /** Generated Model - DO NOT CHANGE */
-package org.tgi.model;
+package org.compiere.model;
 
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Properties;
-import org.compiere.model.*;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for XXR_TaxDeclaration
@@ -32,7 +31,7 @@ public class X_XXR_TaxDeclaration extends PO implements I_XXR_TaxDeclaration, I_
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20200226L;
+	private static final long serialVersionUID = 20200310L;
 
     /** Standard Constructor */
     public X_XXR_TaxDeclaration (Properties ctx, int XXR_TaxDeclaration_ID, String trxName)
@@ -46,7 +45,6 @@ public class X_XXR_TaxDeclaration extends PO implements I_XXR_TaxDeclaration, I_
 			setProcessed (false);
 			setXXR_IsFinalised (false);
 // N
-			setXXR_PeriodKey (null);
 			setXXR_TaxDeclaration_ID (0);
         } */
     }

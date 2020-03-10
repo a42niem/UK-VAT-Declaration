@@ -14,25 +14,23 @@
  * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
  * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
-package org.tgi.model;
+package org.compiere.model;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import org.compiere.model.*;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for XXR_TaxDeclaration
  *  @author iDempiere (generated) 
  *  @version Release 6.2
  */
-@SuppressWarnings("all")
 public interface I_XXR_TaxDeclaration 
 {
 
     /** TableName=XXR_TaxDeclaration */
     public static final String Table_Name = "XXR_TaxDeclaration";
 
-    /** AD_Table_ID=1000267 */
+    /** AD_Table_ID=1000041 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
