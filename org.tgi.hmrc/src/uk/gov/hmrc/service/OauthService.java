@@ -27,8 +27,8 @@ public class OauthService extends HmrcService {
         this.tokenUrl = urlHmrc+"/oauth/token";
     }
     
-    public OauthService(String urlHmrc,String clientId,String clientSecret,String callbackUrl,String serverToken) {
-    	super(urlHmrc,clientId,clientSecret,callbackUrl,serverToken);
+    public OauthService(String urlHmrc,String clientId,String clientSecret,String callbackUrl) {
+    	super(urlHmrc,clientId,clientSecret,callbackUrl);
         this.oAuthClient = new OAuthClient(new URLConnectionClient());
         this.authorizeUrl = urlHmrc+"/oauth/authorize";
         this.tokenUrl = urlHmrc+"/oauth/token";
@@ -103,7 +103,6 @@ public class OauthService extends HmrcService {
 		return "OauthService {" + "urlHmrc = " + urlHmrc +
 				", clientId = " + clientId  +
 				", clientSecret = " + clientSecret +
-				", serverToken = " + serverToken +
 				", callbackUrl = " + callbackUrl +
 				'}';
 	}

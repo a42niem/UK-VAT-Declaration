@@ -6,7 +6,6 @@ public class HmrcService {
 	protected String clientId;
 	protected String clientSecret;
 	protected String callbackUrl;    
-	protected String serverToken;
 
 	private static final String DEFAULT_URL = "https://test-api.service.hmrc.gov.uk";
 	private static final String DEFAULT_CALLBACK_URL = "http://localhost:8080";
@@ -16,12 +15,11 @@ public class HmrcService {
 		this.callbackUrl=DEFAULT_CALLBACK_URL;
 	}
 
-	public HmrcService(String urlHmrc,String clientId,String clientSecret,String callbackUrl,String serverToken) {
+	public HmrcService(String urlHmrc,String clientId,String clientSecret,String callbackUrl) {
 		this.urlHmrc=urlHmrc;
 		this.clientId=clientId;
 		this.clientSecret=clientSecret;
 		this.callbackUrl=callbackUrl;    
-		this.serverToken=serverToken;
 	}
 
 	public String getUrlHmrc() {
@@ -56,20 +54,11 @@ public class HmrcService {
 		this.callbackUrl = callbackUrl;
 	}
 
-	public String getServerToken() {
-		return serverToken;
-	}
-
-	public void setServerToken(String serverToken) {
-		this.serverToken = serverToken;
-	}
-	
 	@Override
 	public String toString() {
 		return "HmrcService {" + "urlHmrc = " + urlHmrc +
 				", clientId = " + clientId  +
 				", clientSecret = " + clientSecret +
-				", serverToken = " + serverToken +
 				", callbackUrl = " + callbackUrl +
 				'}';
 	}

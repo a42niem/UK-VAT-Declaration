@@ -32,7 +32,7 @@ public class TestApplication {
 		//String 	serverToken = "c043966ad6a834492ef2c5af4efd822";
 		String 	serverToken = "a15618d72d3aad6eda1822e2fbb8144";
 
-		OauthService oauthservice = new OauthService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken);
+		OauthService oauthservice = new OauthService(urlHmrc,clientId,clientSecret,callbackUrl);
 		/*1ere etape*/		
 
 		System.out.println(oauthservice.getAuthorizationRequestUrl(scope));
@@ -55,7 +55,7 @@ public class TestApplication {
 			String json =VATParser.toJson(vatReturn);
 			System.out.println(json);
 			String vrn="658278686";
-			VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,new  ServiceConnector());
+			VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,new  ServiceConnector());
 
 
 			String jsonResponse =vatservice.vatReturns(token.getAccessToken(), vrn,json );

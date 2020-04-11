@@ -15,7 +15,7 @@ public class HelloWorldService extends HmrcService{
 	}
 	
 	public HelloWorldService(String urlHmrc,String clientId,String clientSecret,String callbackUrl,String serverToken,ServiceConnector serviceConnector) {
-		super(urlHmrc,clientId,clientSecret,callbackUrl,serverToken);
+		super(urlHmrc,clientId,clientSecret,callbackUrl);
 		this.serviceConnector = serviceConnector; 
 
 	}
@@ -33,7 +33,6 @@ public class HelloWorldService extends HmrcService{
 		return "HelloWorldService {" + "urlHmrc = " + urlHmrc +
 				", clientId = " + clientId  +
 				", clientSecret = " + clientSecret +
-				", serverToken = " + serverToken +
 				", callbackUrl = " + callbackUrl +
 				'}';
 	}

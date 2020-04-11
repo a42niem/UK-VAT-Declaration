@@ -14,8 +14,8 @@ public class VATService extends HmrcService{
 
 	}
 	
-	public VATService(String urlHmrc,String clientId,String clientSecret,String callbackUrl,String serverToken,ServiceConnector serviceConnector) {
-		super(urlHmrc,clientId,clientSecret,callbackUrl,serverToken);
+	public VATService(String urlHmrc,String clientId,String clientSecret,String callbackUrl,ServiceConnector serviceConnector) {
+		super(urlHmrc,clientId,clientSecret,callbackUrl);
 		this.serviceConnector = serviceConnector; 
 
 	}
@@ -74,7 +74,6 @@ public class VATService extends HmrcService{
 		return "VATService {" + "urlHmrc = " + urlHmrc +
 				", clientId = " + clientId  +
 				", clientSecret = " + clientSecret +
-				", serverToken = " + serverToken +
 				", callbackUrl = " + callbackUrl +
 				'}';
 	}

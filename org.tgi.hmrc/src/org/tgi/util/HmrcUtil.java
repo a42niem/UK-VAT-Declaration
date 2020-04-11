@@ -6,7 +6,6 @@ import static org.tgi.model.SystemIDs_Tgi.XXR_HMRC_CLIENT_ID;
 import static org.tgi.model.SystemIDs_Tgi.XXR_HMRC_CLIENT_SECRET;
 import static org.tgi.model.SystemIDs_Tgi.XXR_HMRC_EC_COUNTRYGROUP_ID;
 import static org.tgi.model.SystemIDs_Tgi.XXR_HMRC_RUBRIC_EUROPE_ORG_ID;
-import static org.tgi.model.SystemIDs_Tgi.XXR_HMRC_SERVER_TOKEN;
 import static org.tgi.model.SystemIDs_Tgi.XXR_HMRC_URL;
 import static org.tgi.model.SystemIDs_Tgi.XXR_HMRC_VRN;
 
@@ -44,7 +43,6 @@ public class HmrcUtil {
 	private final static String scope="write:vat";
 	private final static String urlHmrc=MSysConfig.getValue(XXR_HMRC_URL, "", Env.getAD_Client_ID(Env.getCtx())); //"https://test-api.service.hmrc.gov.uk";
 	private final static String clientSecret = MSysConfig.getValue(XXR_HMRC_CLIENT_SECRET, "", Env.getAD_Client_ID(Env.getCtx())); //"1fc1524c-0023-455b-a80c-3b682d661e34";
-	private final static String serverToken = MSysConfig.getValue(XXR_HMRC_SERVER_TOKEN, "", Env.getAD_Client_ID(Env.getCtx())); //"c043966ad6a834492ef2c5af4efd822";
 
 	private final static int europeOrgID = MSysConfig.getIntValue(XXR_HMRC_RUBRIC_EUROPE_ORG_ID, -1, Env.getAD_Client_ID(Env.getCtx())); //1000001; // Europe
 	private final static int ukCountryID = 333;
@@ -60,7 +58,7 @@ public class HmrcUtil {
 	// jars found there : http://www.java2s.com/Code/Jar/o/Downloadorgapacheoltuoauth2common031jar.htm
 	
 	private static OauthService getOauthService() {
-		return new OauthService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken);
+		return new OauthService(urlHmrc,clientId,clientSecret,callbackUrl);
 	}
 
 	public static String getAuthorizationRequestUrl() {
@@ -70,7 +68,7 @@ public class HmrcUtil {
 
 	public static String sendData(String code, String periodKey, BigDecimal box1, BigDecimal box2, BigDecimal box3, BigDecimal box4, BigDecimal box5, BigDecimal box6, BigDecimal box7, BigDecimal box8, BigDecimal box9, boolean isFinalised) {
 		OauthService oauthservice = HmrcUtil.getOauthService();
-		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,serverToken,new  ServiceConnector());
+		VATService vatservice = new VATService(urlHmrc,clientId,clientSecret,callbackUrl,new  ServiceConnector());
 		VATReturn vatReturn = new VATReturn(periodKey, box1.doubleValue(), box2.doubleValue(), box3.doubleValue(), box4.doubleValue(), box5.doubleValue(), box6.longValue(), box7.longValue(), box8.longValue(), box9.longValue(), isFinalised);
 		
 //		Token token = oauthservice.getToken(code);
