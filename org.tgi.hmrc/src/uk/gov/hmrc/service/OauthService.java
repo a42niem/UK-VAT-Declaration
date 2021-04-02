@@ -1,20 +1,20 @@
 package uk.gov.hmrc.service;
 
-import org.apache.oltu.oauth2.client.OAuthClient;
-import org.apache.oltu.oauth2.client.URLConnectionClient;
-import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
-import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
-import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.apache.oltu.oauth2.common.message.types.GrantType;
-import org.apache.oltu.oauth2.common.message.types.ResponseType;
-import org.tgi.util.HmrcUtil;
+import java.util.Arrays;
+import java.util.List;
+
+import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
+import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.RefreshTokenRequest;
+import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 
 import uk.gov.hmrc.model.Token;
 
 public class OauthService extends HmrcService {
-
-    private final OAuthClient oAuthClient;
 
     public final String authorizeUrl;
     public final String tokenUrl;
@@ -22,14 +22,12 @@ public class OauthService extends HmrcService {
 
     public OauthService() {
     	super();
-        this.oAuthClient = new OAuthClient(new URLConnectionClient());
         this.authorizeUrl = urlHmrc+"/oauth/authorize";
         this.tokenUrl = urlHmrc+"/oauth/token";
     }
     
     public OauthService(String urlHmrc,String clientId,String clientSecret,String callbackUrl) {
     	super(urlHmrc,clientId,clientSecret,callbackUrl);
-        this.oAuthClient = new OAuthClient(new URLConnectionClient());
         this.authorizeUrl = urlHmrc+"/oauth/authorize";
         this.tokenUrl = urlHmrc+"/oauth/token";
     }
@@ -37,66 +35,61 @@ public class OauthService extends HmrcService {
     public Token getToken(String code) {
         try {
         	System.out.println("Token_getToken_code = " + code);
-            OAuthClientRequest request = OAuthClientRequest
-                    .tokenLocation(tokenUrl)
-                    .setGrantType(GrantType.AUTHORIZATION_CODE)
-                    .setClientId(clientId)
-                    .setClientSecret(clientSecret)
-                    .setRedirectURI(callbackUrl)
-                    .setCode(code)
-                    .buildBodyMessage();
-            
-            //request.addHeader("Accept", "application/json");
-            //request.addHeader("Content-Type", "application/json");
 
-            return fetchToken(request);
+			AuthorizationCodeTokenRequest request = new AuthorizationCodeTokenRequest(new NetHttpTransport(),
+					GsonFactory.getDefaultInstance(),
+					new GenericUrl(this.tokenUrl), code);
+			request.setRedirectUri(callbackUrl);
+			request.setGrantType("authorization_code");
+			request.setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret));
+			TokenResponse tokenResponse = request.execute();
+
+			return fetchToken(tokenResponse);
 
         } catch (Exception e) {
-        	System.out.println("Token_getToken_code ERROR");
+        	System.out.println("Token_getToken_code CATCH");
             throw new RuntimeException(e);
         }
     }
 
     public Token refreshToken(String refreshToken) {
         try {
-            OAuthClientRequest request = OAuthClientRequest
-                    .tokenLocation(tokenUrl)
-                    .setGrantType(GrantType.REFRESH_TOKEN)
-                    .setClientId(clientId)
-                    .setClientSecret(clientSecret)
-                    .setRefreshToken(refreshToken)
-                    .buildBodyMessage();
-
-            return fetchToken(request);
+        	System.out.println("refreshToken : " + refreshToken);
+        	RefreshTokenRequest request = new RefreshTokenRequest(new NetHttpTransport(),
+					GsonFactory.getDefaultInstance(),
+					new GenericUrl(this.tokenUrl),refreshToken);
+			request.setGrantType("refresh_token");
+			request.setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret));
+			TokenResponse tokenResponse = request.execute();
+			return fetchToken(tokenResponse);
 
         } catch (Exception e) {
+        	System.out.println("refreshToken_catch");
             throw new RuntimeException(e);
         }
     }
     
 	public String getAuthorizationRequestUrl(String scope) {
 		try {
-			OAuthClientRequest request = OAuthClientRequest
-					.authorizationLocation(authorizeUrl)
-					.setClientId(clientId)
-					.setResponseType(ResponseType.CODE.toString())
-					.setScope(scope)
-					.setRedirectURI(callbackUrl)
-					.buildQueryMessage();
+			List<String> scopesList = Arrays.asList(scope);
+			List<String> ResponseTypeList = Arrays.asList("code");
+		    //noinspection UnnecessaryLocalVariable
+		    AuthorizationCodeRequestUrl request = new AuthorizationCodeRequestUrl(authorizeUrl, clientId)
+		            .setRedirectUri(callbackUrl)
+		            .setScopes(scopesList)
+		            .setResponseTypes(ResponseTypeList);
 
-			return request.getLocationUri();
+			return request.build();
 
-		} catch (OAuthSystemException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-
-    private Token fetchToken(OAuthClientRequest tokenRequest) throws OAuthProblemException, OAuthSystemException {
+    
+    private Token fetchToken(TokenResponse tokenRequest)  {
     	System.out.println("Token_fetchToken_1");
-        OAuthJSONAccessTokenResponse tokenResponse = oAuthClient.accessToken(tokenRequest);
-        System.out.println("Token_fetchToken_2");
-        return new Token(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken());
-    }
+		return new Token(tokenRequest.getAccessToken(), tokenRequest.getRefreshToken());
+	}
     
     @Override
 	public String toString() {

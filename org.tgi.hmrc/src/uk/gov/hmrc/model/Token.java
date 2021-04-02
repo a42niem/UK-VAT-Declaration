@@ -6,7 +6,7 @@ public class Token {
     private final String refreshToken;
 
     public Token(String accessToken, String refreshToken) {
-    	System.out.println("Token");
+    	System.out.println("Token : " + accessToken + " / " + refreshToken);
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
     }

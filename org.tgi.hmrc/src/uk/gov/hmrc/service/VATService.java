@@ -21,6 +21,13 @@ public class VATService extends HmrcService{
 	}
 	
 	public String vatReturns(String accessToken,String vrn, String json) throws UnauthorizedException {
+		
+		System.out.println(toString());
+		System.out.println(json);
+		System.out.println(vrn);
+		System.out.println(accessToken);
+		System.out.println(urlHmrc+"/organisations/vat/"+vrn+"/returns");
+		
 		return serviceConnector.post(
 				urlHmrc+"/organisations/vat/"+vrn+"/returns",
 				"application/vnd.hmrc.1.0+json",

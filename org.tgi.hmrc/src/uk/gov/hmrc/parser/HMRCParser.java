@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 public class HMRCParser {
 	public static final ObjectMapper prettyMapper;
@@ -17,7 +16,8 @@ public class HMRCParser {
 				"uk.gov.hmrc", "HMRC-test"));
 
 		prettyMapper = new ObjectMapper();
-		prettyMapper.registerModule(new JavaTimeModule());
+//		prettyMapper.registerModule(new JavaTimeModule());
+		prettyMapper.findAndRegisterModules();
 		prettyMapper.registerModule(hmrcmodule);
 		prettyMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 		prettyMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);

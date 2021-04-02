@@ -1,6 +1,7 @@
 package uk.gov.hmrc.service;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -9,11 +10,10 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.tgi.util.HmrcUtil;
+
+import com.google.common.base.Optional;
 
 import uk.gov.hmrc.model.UnauthorizedException;
-
-import java.io.IOException;
 
 
 public class ServiceConnector {
@@ -32,7 +32,7 @@ public class ServiceConnector {
         }
 
         // Fraud-Prevention-Headers for application connection method "OTHER_DIRECT"
-//        request.addHeader("Gov-Client-Connection-Method", "OTHER_DIRECT");
+        request.addHeader("Gov-Client-Connection-Method", "OTHER_DIRECT");
 //        request.addHeader("Gov-Client-Public-IP", HmrcUtil.publicIP);
         // Sandbox Test data
 //        request.addHeader("Gov-Test-Scenario", "MULTIPLE_PAYMENTS");
@@ -54,14 +54,15 @@ public class ServiceConnector {
     public String post(String url, String acceptHeader, Optional<String> bearerToken,Optional<String> json) throws UnauthorizedException {
         HttpPost request = new HttpPost(url);
         request.addHeader("Accept", acceptHeader);
-        if (bearerToken.isPresent()) {
-            request.addHeader("Authorization", "Bearer " + bearerToken.get());
-        }
         if (json.isPresent()) {
         	StringEntity requestEntity = new StringEntity(
         		    json.get(),
         		    ContentType.APPLICATION_JSON);
         	request.setEntity(requestEntity);
+            request.addHeader("Content-Type", "application/json");
+        }
+        if (bearerToken.isPresent()) {
+            request.addHeader("Authorization", "Bearer " + bearerToken.get());
         }
 
         try {
