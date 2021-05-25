@@ -390,7 +390,14 @@ public class HmrcUtil {
 
 	/** net VAT to pay to HMRC or reclaim */
 	public static BigDecimal getBox5(Properties ctx, BigDecimal amtBox3, BigDecimal amtBox4, Timestamp to, int instanceID, int totalAmtCurrencyID, IProcessUI iProcessUI, String trxName) {
-		BigDecimal totalAmt = amtBox4.subtract(amtBox3);
+		
+		BigDecimal totalAmt = Env.ZERO;
+		
+		if (amtBox4.compareTo(amtBox3) > 0)
+			totalAmt = amtBox4.subtract(amtBox3);
+		else
+			totalAmt = amtBox3.subtract(amtBox4);
+
 		String value = "5";
 		String name = MRefList.getListDescription(ctx, DB.getSQLValueStringEx(null, "SELECT Name FROM AD_Reference WHERE AD_Reference_ID = ?", getReferenceID()), value);
 		statusUpdate(iProcessUI, getName(value, name));
