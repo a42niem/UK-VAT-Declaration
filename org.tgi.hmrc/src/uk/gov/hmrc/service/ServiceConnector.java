@@ -71,8 +71,8 @@ public class ServiceConnector {
             if (response.getStatusLine().getStatusCode() == 201) { // Created
            	 return EntityUtils.toString(response.getEntity());	
            }
-           else { // TODO get the explicite error message (in response)
-           	return "Error " + response.getStatusLine().getStatusCode() + " : " + response.getStatusLine().getReasonPhrase() + response.getStatusLine().toString();
+           else {
+           	return "Error " + response.getStatusLine().getStatusCode() + " : " + response.getStatusLine().getReasonPhrase() + response.getStatusLine().toString() + " - " + EntityUtils.toString(response.getEntity());
            }
             
         } catch (IOException e) {
